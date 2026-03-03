@@ -1080,24 +1080,32 @@
     }).join('');
   }
 
-  // 初期化
-  document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
-  renderPresets(); renderPresetApply(); renderHistory();
-  // デフォルトで往路・復路それぞれ1行追加
-  addFare('Go'); addFare('Back');
-  addOther();
-  if ('scrollRestoration' in history) {
+<script>
+
+// ===== スクロール復元無効 =====
+if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 
-function forceTop() {
-  window.scrollTo(0, 0);
-}
+// 初期化
+document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+renderPresets();
+renderPresetApply();
+renderHistory();
 
-window.addEventListener('load', forceTop);
-window.addEventListener('pageshow', forceTop);
+// デフォルト追加
+addFare('Go');
+addFare('Back');
+addOther();
+
+// ===== 常にトップ表示 =====
+window.addEventListener('pageshow', function () {
+  window.scrollTo(0, 0);
+});
+
 </script>
 </body>
 </html>
+
 
 
