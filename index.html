@@ -286,6 +286,45 @@
 
   .history-empty{text-align:center;padding:32px 0;color:var(--muted);font-size:.85rem}
 
+
+  /* ===== アバウトタブ ===== */
+  .about-hero{background:var(--navy);border-radius:20px;padding:32px 20px 28px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden}
+  .about-hero::before{content:'✈';position:absolute;right:-10px;bottom:-10px;font-size:7rem;opacity:.06;line-height:1}
+  .about-icon{font-size:2.8rem;margin-bottom:10px;line-height:1}
+  .about-app-name{font-size:1.3rem;font-weight:900;color:#fff;letter-spacing:.06em;margin-bottom:8px}
+  .about-version-badge{display:inline-block;background:var(--yellow);color:var(--navy);font-family:var(--mono);font-size:.75rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:.04em}
+  .about-tagline{font-size:.8rem;color:rgba(255,255,255,.45);letter-spacing:.06em}
+
+  .about-author{display:flex;align-items:center;gap:14px}
+  .about-author-avatar{width:48px;height:48px;border-radius:50%;background:var(--navy);color:#fff;font-size:1.4rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:0}
+  .about-author-name{font-size:1rem;font-weight:900;color:var(--navy);letter-spacing:.04em}
+  .about-author-sub{font-size:.75rem;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+
+  .feature-list{display:flex;flex-direction:column;gap:0}
+  .feature-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .feature-item:last-child{border-bottom:none}
+  .feature-icon{font-size:1.2rem;flex-shrink:0;width:28px;text-align:center;margin-top:1px}
+  .feature-name{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+  .feature-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
+
+  .changelog{display:flex;flex-direction:column;gap:0}
+  .changelog-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .changelog-item:last-child{border-bottom:none}
+  .changelog-version{font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--blue);background:var(--blue-light);padding:3px 8px;border-radius:6px;white-space:nowrap;height:fit-content;margin-top:2px}
+  .changelog-title{font-size:.86rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+  .changelog-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
+
+  .data-info{background:var(--bg);border-radius:10px;overflow:hidden}
+  .data-info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:.84rem}
+  .data-info-row:last-child{border-bottom:none}
+  .data-info-label{color:var(--muted);font-weight:700;font-size:.78rem}
+  .data-info-val{color:var(--navy);font-weight:500}
+
+  .btn-data-clear{flex:1;padding:11px;background:none;border:1.5px solid #ffd0d5;color:var(--red);border-radius:10px;font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-data-clear:hover{background:var(--red-light)}
+
+  .about-footer{text-align:center;padding:20px 0 8px;font-size:.78rem;color:var(--muted);letter-spacing:.06em}
+
   .btn-save{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:12px;font-family:var(--sans);font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
   .btn-save:hover{opacity:.85;transform:translateY(-1px)}
   .preset-card{background:var(--white);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -308,6 +347,7 @@
   <button class="tab-btn active" onclick="switchTab('calc',this)">💼 費用計算</button>
   <button class="tab-btn" onclick="switchTab('preset',this)">⚙ プリセット管理</button>
   <button class="tab-btn" onclick="switchTab('history',this)">📋 履歴</button>
+  <button class="tab-btn" onclick="switchTab('about',this)">ℹ️ このアプリ</button>
 </div>
 
 <div class="main">
@@ -492,13 +532,13 @@
       <div class="section-body">
         <div class="field"><label>プリセット名</label><input type="text" id="presetName" placeholder="例: 国内出張スタンダード"></div>
         <div class="row-2">
-          <div class="field"><label>日当（円/日）</label><div class="input-wrap"><input type="number" id="pDailyAllowance" placeholder="3,000" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>日当（円/日）</label><div class="input-wrap"><input type="number" id="pDailyAllowance" placeholder="1,200" min="0"><span class="unit">円</span></div></div>
           <div class="field"><label>宿泊費（円/泊）</label><div class="input-wrap"><input type="number" id="pHotel" placeholder="8,000" min="0"><span class="unit">円</span></div></div>
         </div>
         <div class="row-3">
-          <div class="field"><label>朝食（円）</label><div class="input-wrap"><input type="number" id="pBreakfast" placeholder="800" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>朝食（円）</label><div class="input-wrap"><input type="number" id="pBreakfast" placeholder="1,000" min="0"><span class="unit">円</span></div></div>
           <div class="field"><label>昼食（円）</label><div class="input-wrap"><input type="number" id="pLunch" placeholder="1,000" min="0"><span class="unit">円</span></div></div>
-          <div class="field"><label>夕食（円）</label><div class="input-wrap"><input type="number" id="pDinner" placeholder="1,500" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>夕食（円）</label><div class="input-wrap"><input type="number" id="pDinner" placeholder="1,000" min="0"><span class="unit">円</span></div></div>
         </div>
         <div class="row-2">
           <div class="field"><label>燃費（km/L）</label><div class="input-wrap"><input type="number" id="pMileage" placeholder="15" min="0"><span class="unit">km/L</span></div></div>
@@ -525,6 +565,118 @@
         <div id="historyList"><p class="empty-note">履歴はまだありません</p></div>
       </div>
     </div>
+  </div>
+
+  <!-- アバウトタブ -->
+  <div class="tab-content" id="tab-about">
+
+    <!-- バージョン情報 -->
+    <div class="about-hero">
+      <div class="about-icon">✈</div>
+      <div class="about-app-name">出張費計算アプリ</div>
+      <div class="about-version-badge">Version 1.5.0</div>
+      <div class="about-tagline">出張の費用計算をかんたんに</div>
+    </div>
+
+    <!-- 作成者 -->
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-blue">👤</div><div class="section-title">作成者</div></div>
+      <div class="section-body">
+        <div class="about-author">
+          <div class="about-author-avatar">Y</div>
+          <div class="about-author-info">
+            <div class="about-author-name">yuito</div>
+            <div class="about-author-sub">Developer &amp; Designer</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 機能一覧 -->
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-green">✅</div><div class="section-title">主な機能</div></div>
+      <div class="section-body">
+        <div class="feature-list">
+          <div class="feature-item"><span class="feature-icon">📅</span><div class="feature-text"><div class="feature-name">土日自動除外</div><div class="feature-desc">平日のみ日当・食費を自動計算</div></div></div>
+          <div class="feature-item"><span class="feature-icon">🍽</span><div class="feature-text"><div class="feature-name">出発日・帰着日の食事設定</div><div class="feature-desc">時間帯に応じて食事補助を柔軟に調整</div></div></div>
+          <div class="feature-item"><span class="feature-icon">🚃</span><div class="feature-text"><div class="feature-name">交通費の複数明細入力</div><div class="feature-desc">領収書・切符など複数の費用を合算</div></div></div>
+          <div class="feature-item"><span class="feature-icon">🔍</span><div class="feature-text"><div class="feature-name">路線検索リンク</div><div class="feature-desc">Yahoo!路線・Googleマップ・NAVITIMEへ連携</div></div></div>
+          <div class="feature-item"><span class="feature-icon">⚡</span><div class="feature-text"><div class="feature-name">プリセット機能</div><div class="feature-desc">よく使う金額を登録してワンタップ適用</div></div></div>
+          <div class="feature-item"><span class="feature-icon">📋</span><div class="feature-text"><div class="feature-name">履歴保存</div><div class="feature-desc">計算結果を自動保存・再利用可能</div></div></div>
+          <div class="feature-item"><span class="feature-icon">📴</span><div class="feature-text"><div class="feature-name">オフライン対応</div><div class="feature-desc">インターネット不要で動作（路線検索除く）</div></div></div>
+          <div class="feature-item"><span class="feature-icon">🔒</span><div class="feature-text"><div class="feature-name">プライバシー保護</div><div class="feature-desc">データはすべてお使いの端末内にのみ保存</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 更新履歴 -->
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
+      <div class="section-body">
+        <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v1.5.0</div>
+            <div class="changelog-content">
+              <div class="changelog-title">履歴機能を追加</div>
+              <div class="changelog-desc">計算結果の自動保存・再利用に対応</div>
+            </div>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v1.4.0</div>
+            <div class="changelog-content">
+              <div class="changelog-title">食事設定を強化</div>
+              <div class="changelog-desc">出発日・帰着日ごとに食事補助を個別設定可能に</div>
+            </div>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v1.3.0</div>
+            <div class="changelog-content">
+              <div class="changelog-title">交通費の複数明細・その他自由追加</div>
+              <div class="changelog-desc">領収書と切符など複数費用の合算に対応</div>
+            </div>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v1.2.0</div>
+            <div class="changelog-content">
+              <div class="changelog-title">路線検索リンクを追加</div>
+              <div class="changelog-desc">駅名入力でYahoo!路線等へワンタップ連携</div>
+            </div>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v1.1.0</div>
+            <div class="changelog-content">
+              <div class="changelog-title">プリセット機能を追加</div>
+              <div class="changelog-desc">よく使う金額設定を保存・適用可能に</div>
+            </div>
+          </div>
+          <div class="changelog-item">
+            <div class="changelog-version">v1.0.0</div>
+            <div class="changelog-content">
+              <div class="changelog-title">初回リリース</div>
+              <div class="changelog-desc">土日除外・日当・宿泊・食費・ガソリン計算</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- データ管理 -->
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-orange">🗄</div><div class="section-title">データ管理</div></div>
+      <div class="section-body">
+        <div class="data-info">
+          <div class="data-info-row"><span class="data-info-label">保存場所</span><span class="data-info-val">お使いの端末（ブラウザ内）</span></div>
+          <div class="data-info-row"><span class="data-info-label">外部送信</span><span class="data-info-val">なし（完全ローカル）</span></div>
+          <div class="data-info-row"><span class="data-info-label">履歴保存件数</span><span class="data-info-val">最大30件</span></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn-data-clear" onclick="clearAllData()">⚠️ すべてのデータを削除</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-footer">Made with ☕ by yuito</div>
+
   </div>
 </div>
 </div>
@@ -1077,6 +1229,16 @@
     el.innerHTML = '<div class="preset-chips">'+presets.map(p=>`<button class="preset-chip" onclick="applyPreset(${p.id})">⚡ ${p.name}</button>`).join('')+'</div>';
   }
 
+
+  // データ全削除
+  function clearAllData() {
+    if (!confirm('プリセット・履歴を含むすべてのデータを削除しますか？\nこの操作は元に戻せません。')) return;
+    localStorage.removeItem('bt_presets_v5');
+    localStorage.removeItem('bt_history_v5');
+    presets = []; histories = [];
+    renderPresets(); renderPresetApply(); renderHistory();
+    alert('すべてのデータを削除しました。');
+  }
 
   // 初期化
   if (history.scrollRestoration) history.scrollRestoration = "manual";
