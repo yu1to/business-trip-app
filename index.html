@@ -511,7 +511,8 @@
       <div class="section-header"><div class="section-icon icon-orange">📋</div><div class="section-title">保存済みプリセット</div></div>
       <div class="section-body"><div id="presetList"><p class="empty-note">プリセットはまだありません</p></div></div>
     </div>
-  
+  </div>
+
   <!-- 履歴タブ -->
   <div class="tab-content" id="tab-history">
     <div class="section">
@@ -529,6 +530,131 @@
 </div>
 
 <script>
+  // ===== 履歴 =====
+  let histories = JSON.parse(localStorage.getItem('bt_history_v5') || '[]');
+  const MAX_HISTORY = 30;
+
+  function saveHistory(data) {
+    const entry = {
+      id: Date.now(),
+      savedAt: new Date().toLocaleString('ja-JP'),
+      startDate: data.startDate,
+      endDate: data.endDate,
+      totalDays: data.totalDays,
+      nights: data.nights,
+      weekdayDays: data.weekdayDays,
+      total: data.total,
+      breakdown: data.breakdown, // [{name, value}]
+      inputs: data.inputs,       // 再利用用の入力値
+    };
+    histories.unshift(entry);
+    if (histories.length > MAX_HISTORY) histories = histories.slice(0, MAX_HISTORY);
+    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
+  }
+
+  function deleteHistory(id) {
+    if (!confirm('この履歴を削除しますか？')) return;
+    histories = histories.filter(h => h.id !== id);
+    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
+    renderHistory();
+  }
+
+  function clearAllHistory() {
+    if (!confirm('履歴をすべて削除しますか？')) return;
+    histories = [];
+    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
+    renderHistory();
+  }
+
+  function toggleHistoryDetail(id) {
+    const detail = document.getElementById('hdetail_' + id);
+    const chevron = document.getElementById('hchevron_' + id);
+    if (!detail) return;
+    detail.classList.toggle('open');
+    chevron.classList.toggle('open');
+  }
+
+  function reuseHistory(id) {
+    const h = histories.find(x => x.id === id);
+    if (!h || !h.inputs) return;
+    const inp = h.inputs;
+    const setVal = (elId, val) => { const el = document.getElementById(elId); if (el && val !== undefined && val !== null) el.value = val; };
+    const setChk = (elId, val) => { const el = document.getElementById(elId); if (el) el.checked = !!val; };
+
+    setVal('startDate', inp.startDate);
+    setVal('endDate', inp.endDate);
+    setVal('dailyAllowance', inp.dailyAllowance);
+    setVal('hotelPerNight', inp.hotelPerNight);
+    setVal('breakfast', inp.breakfast);
+    setVal('lunch', inp.lunch);
+    setVal('dinner', inp.dinner);
+    setChk('goBreakfast', inp.goBreakfast);
+    setChk('goLunch', inp.goLunch);
+    setChk('goDinner', inp.goDinner);
+    setChk('backBreakfast', inp.backBreakfast);
+    setChk('backLunch', inp.backLunch);
+    setChk('backDinner', inp.backDinner);
+    setVal('gasKm', inp.gasKm);
+    setVal('gasMileage', inp.gasMileage);
+    setVal('gasPrice', inp.gasPrice);
+
+    // 交通費・その他は一旦クリアして再追加
+    document.getElementById('fareListGo').innerHTML = '';
+    document.getElementById('fareListBack').innerHTML = '';
+    document.getElementById('otherList').innerHTML = '';
+    fareIdGo = 0; fareIdBack = 0; otherIdCount = 0;
+
+    if (inp.fareGo && inp.fareGo.length > 0) {
+      inp.fareGo.forEach(f => { addFare('Go'); const items = document.getElementById('fareListGo').querySelectorAll('.fare-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = f.name; last.querySelector('input[type=number]').value = f.amt; });
+    } else { addFare('Go'); }
+
+    if (inp.fareBack && inp.fareBack.length > 0) {
+      inp.fareBack.forEach(f => { addFare('Back'); const items = document.getElementById('fareListBack').querySelectorAll('.fare-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = f.name; last.querySelector('input[type=number]').value = f.amt; });
+    } else { addFare('Back'); }
+
+    if (inp.otherItems && inp.otherItems.length > 0) {
+      inp.otherItems.forEach(o => { addOther(); const items = document.getElementById('otherList').querySelectorAll('.other-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = o.name; last.querySelector('input[type=number]').value = o.amt; });
+    } else { addOther(); }
+
+    updatePeriod();
+    updateFareTotal('Go'); updateFareTotal('Back'); updateOtherTotal();
+
+    // 計算タブへ移動
+    switchTab('calc', document.querySelector('.tab-btn'));
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function renderHistory() {
+    const el = document.getElementById('historyList');
+    if (!el) return;
+    if (!histories.length) {
+      el.innerHTML = '<div class="history-empty">📭 履歴はまだありません<br><span style="font-size:.75rem">計算するたびに自動保存されます</span></div>';
+      return;
+    }
+    el.innerHTML = histories.map(h => {
+      const period = `${h.startDate} 〜 ${h.endDate}`;
+      const summary = `${h.totalDays}日間 / ${h.nights}泊 / 平日${h.weekdayDays}日`;
+      return `<div class="history-item">
+        <div class="history-header" onclick="toggleHistoryDetail(${h.id})">
+          <div class="history-meta">
+            <div class="history-date">📅 ${h.savedAt}</div>
+            <div class="history-period">${period}<span style="font-size:.72rem;color:var(--muted);margin-left:8px">${summary}</span></div>
+          </div>
+          <div class="history-total">¥${Math.round(h.total).toLocaleString()}</div>
+          <div class="history-chevron" id="hchevron_${h.id}">▼</div>
+        </div>
+        <div class="history-detail" id="hdetail_${h.id}">
+          ${h.breakdown.map(b => `<div class="history-detail-row"><span class="history-detail-name">${b.name}</span><span class="history-detail-val">¥${Math.round(b.value).toLocaleString()}</span></div>`).join('')}
+          <div class="history-actions">
+            <button class="btn-reuse" onclick="reuseHistory(${h.id})">↩ この内容で再計算</button>
+            <button class="btn-del-history" onclick="deleteHistory(${h.id})">削除</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+
   let presets = JSON.parse(localStorage.getItem('bt_presets_v5') || '[]');
   const dotColors = ['#2f6bff','#00b87a','#ff7240','#ffc233','#ff4d6a','#9b6fff'];
   const DAYS_JA = ['日','月','火','水','木','金','土'];
@@ -952,131 +1078,8 @@
   }
 
 
-  // ===== 履歴 =====
-  let histories = JSON.parse(localStorage.getItem('bt_history_v5') || '[]');
-  const MAX_HISTORY = 30;
-
-  function saveHistory(data) {
-    const entry = {
-      id: Date.now(),
-      savedAt: new Date().toLocaleString('ja-JP'),
-      startDate: data.startDate,
-      endDate: data.endDate,
-      totalDays: data.totalDays,
-      nights: data.nights,
-      weekdayDays: data.weekdayDays,
-      total: data.total,
-      breakdown: data.breakdown, // [{name, value}]
-      inputs: data.inputs,       // 再利用用の入力値
-    };
-    histories.unshift(entry);
-    if (histories.length > MAX_HISTORY) histories = histories.slice(0, MAX_HISTORY);
-    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
-  }
-
-  function deleteHistory(id) {
-    if (!confirm('この履歴を削除しますか？')) return;
-    histories = histories.filter(h => h.id !== id);
-    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
-    renderHistory();
-  }
-
-  function clearAllHistory() {
-    if (!confirm('履歴をすべて削除しますか？')) return;
-    histories = [];
-    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
-    renderHistory();
-  }
-
-  function toggleHistoryDetail(id) {
-    const detail = document.getElementById('hdetail_' + id);
-    const chevron = document.getElementById('hchevron_' + id);
-    if (!detail) return;
-    detail.classList.toggle('open');
-    chevron.classList.toggle('open');
-  }
-
-  function reuseHistory(id) {
-    const h = histories.find(x => x.id === id);
-    if (!h || !h.inputs) return;
-    const inp = h.inputs;
-    const setVal = (elId, val) => { const el = document.getElementById(elId); if (el && val !== undefined && val !== null) el.value = val; };
-    const setChk = (elId, val) => { const el = document.getElementById(elId); if (el) el.checked = !!val; };
-
-    setVal('startDate', inp.startDate);
-    setVal('endDate', inp.endDate);
-    setVal('dailyAllowance', inp.dailyAllowance);
-    setVal('hotelPerNight', inp.hotelPerNight);
-    setVal('breakfast', inp.breakfast);
-    setVal('lunch', inp.lunch);
-    setVal('dinner', inp.dinner);
-    setChk('goBreakfast', inp.goBreakfast);
-    setChk('goLunch', inp.goLunch);
-    setChk('goDinner', inp.goDinner);
-    setChk('backBreakfast', inp.backBreakfast);
-    setChk('backLunch', inp.backLunch);
-    setChk('backDinner', inp.backDinner);
-    setVal('gasKm', inp.gasKm);
-    setVal('gasMileage', inp.gasMileage);
-    setVal('gasPrice', inp.gasPrice);
-
-    // 交通費・その他は一旦クリアして再追加
-    document.getElementById('fareListGo').innerHTML = '';
-    document.getElementById('fareListBack').innerHTML = '';
-    document.getElementById('otherList').innerHTML = '';
-    fareIdGo = 0; fareIdBack = 0; otherIdCount = 0;
-
-    if (inp.fareGo && inp.fareGo.length > 0) {
-      inp.fareGo.forEach(f => { addFare('Go'); const items = document.getElementById('fareListGo').querySelectorAll('.fare-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = f.name; last.querySelector('input[type=number]').value = f.amt; });
-    } else { addFare('Go'); }
-
-    if (inp.fareBack && inp.fareBack.length > 0) {
-      inp.fareBack.forEach(f => { addFare('Back'); const items = document.getElementById('fareListBack').querySelectorAll('.fare-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = f.name; last.querySelector('input[type=number]').value = f.amt; });
-    } else { addFare('Back'); }
-
-    if (inp.otherItems && inp.otherItems.length > 0) {
-      inp.otherItems.forEach(o => { addOther(); const items = document.getElementById('otherList').querySelectorAll('.other-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = o.name; last.querySelector('input[type=number]').value = o.amt; });
-    } else { addOther(); }
-
-    updatePeriod();
-    updateFareTotal('Go'); updateFareTotal('Back'); updateOtherTotal();
-
-    // 計算タブへ移動
-    switchTab('calc', document.querySelector('.tab-btn'));
-    window.scrollTo({top:0, behavior:'smooth'});
-  }
-
-  function renderHistory() {
-    const el = document.getElementById('historyList');
-    if (!el) return;
-    if (!histories.length) {
-      el.innerHTML = '<div class="history-empty">📭 履歴はまだありません<br><span style="font-size:.75rem">計算するたびに自動保存されます</span></div>';
-      return;
-    }
-    el.innerHTML = histories.map(h => {
-      const period = `${h.startDate} 〜 ${h.endDate}`;
-      const summary = `${h.totalDays}日間 / ${h.nights}泊 / 平日${h.weekdayDays}日`;
-      return `<div class="history-item">
-        <div class="history-header" onclick="toggleHistoryDetail(${h.id})">
-          <div class="history-meta">
-            <div class="history-date">📅 ${h.savedAt}</div>
-            <div class="history-period">${period}<span style="font-size:.72rem;color:var(--muted);margin-left:8px">${summary}</span></div>
-          </div>
-          <div class="history-total">¥${Math.round(h.total).toLocaleString()}</div>
-          <div class="history-chevron" id="hchevron_${h.id}">▼</div>
-        </div>
-        <div class="history-detail" id="hdetail_${h.id}">
-          ${h.breakdown.map(b => `<div class="history-detail-row"><span class="history-detail-name">${b.name}</span><span class="history-detail-val">¥${Math.round(b.value).toLocaleString()}</span></div>`).join('')}
-          <div class="history-actions">
-            <button class="btn-reuse" onclick="reuseHistory(${h.id})">↩ この内容で再計算</button>
-            <button class="btn-del-history" onclick="deleteHistory(${h.id})">削除</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
   // 初期化
+  window.scrollTo(0, 0);
   document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
   renderPresets(); renderPresetApply(); renderHistory();
   // デフォルトで往路・復路それぞれ1行追加
