@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>出張費計算アプリ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f4f0;--white:#fff;--navy:#1a2240;--navy2:#2d3a5e;
+    --blue:#2f6bff;--blue-light:#e8effe;--green:#00b87a;--green-light:#e0f8ef;
+    --orange:#ff7240;--orange-light:#fff0ea;--yellow:#ffc233;--yellow-light:#fff9e6;
+    --red:#ff4d6a;--red-light:#fff0f2;--border:#e2e0d8;--text:#1a2240;--muted:#8b8fa8;
+    --mono:'DM Mono',monospace;--sans:'Zen Kaku Gothic New',sans-serif;
+    --shadow:0 2px 12px rgba(26,34,64,.08);--shadow-lg:0 8px 32px rgba(26,34,64,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+  .app-header{background:var(--navy);padding:20px 24px 24px;position:relative;overflow:hidden}
+  .app-header::before{content:'✈';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:5rem;opacity:.07}
+  .app-header h1{font-size:1.3rem;font-weight:900;color:#fff;letter-spacing:.06em}
+  .app-header p{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.08em}
+
+  .tab-nav{background:var(--navy2);display:flex;padding:0 16px}
+  .tab-btn{padding:12px 20px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.45);font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.04em;white-space:nowrap}
+  .tab-btn.active{color:#fff;border-bottom-color:var(--yellow)}
+
+  .main{padding:20px 16px 60px;max-width:560px;margin:0 auto}
+  .tab-content{display:none}
+  .tab-content.active{display:block;animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  .section{background:var(--white);border-radius:16px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+  .section-header{display:flex;align-items:center;gap:10px;padding:14px 18px 12px;border-bottom:1px solid var(--border)}
+  .section-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+  .icon-blue{background:var(--blue-light)}.icon-green{background:var(--green-light)}
+  .icon-orange{background:var(--orange-light)}.icon-yellow{background:var(--yellow-light)}
+  .section-title{font-size:.88rem;font-weight:700;color:var(--navy)}
+  .section-body{padding:16px 18px}
+
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+  .input-wrap{position:relative}
+  .input-wrap .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--muted);font-family:var(--mono);pointer-events:none}
+
+  input[type=date],input[type=number],input[type=text]{
+    width:100%;border:1.5px solid var(--border);border-radius:10px;
+    background:var(--bg);color:var(--text);font-family:var(--sans);
+    font-size:.92rem;font-weight:500;padding:10px 14px;outline:none;
+    transition:border-color .15s,background .15s;-webkit-appearance:none
+  }
+  input[type=number]{padding-right:42px}
+  input:focus{border-color:var(--blue);background:var(--white)}
+
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+  /* 期間サマリー */
+  .period-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .period-box{border-radius:10px;padding:10px 12px;text-align:center}
+  .period-box .pb-num{font-family:var(--mono);font-size:1.4rem;font-weight:500;line-height:1.1}
+  .period-box .pb-label{font-size:.68rem;font-weight:700;letter-spacing:.06em;margin-top:3px;opacity:.75}
+  .pb-total{background:var(--blue-light);color:var(--blue)}
+  .pb-weekday{background:var(--green-light);color:var(--green)}
+  .pb-weekend{background:var(--red-light);color:var(--red)}
+
+  .calendar-preview{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px}
+  .cal-day{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;font-family:var(--mono)}
+  .cal-weekday{background:var(--green-light);color:var(--green)}
+  .cal-weekend{background:var(--red-light);color:var(--red)}
+  .cal-label{font-size:.68rem;color:var(--muted);margin-top:6px;width:100%;display:flex;gap:12px}
+  .cal-legend{display:flex;align-items:center;gap:4px}
+  .cal-dot{width:8px;height:8px;border-radius:3px}
+
+  .auto-field{background:var(--bg);border:1.5px dashed var(--border);border-radius:10px;padding:10px 14px;font-size:.88rem;font-weight:700;color:var(--navy);font-family:var(--mono);min-height:42px;display:flex;align-items:center}
+  .auto-field.has-value{color:var(--blue);border-color:var(--blue);background:var(--blue-light)}
+
+  .rule-note{display:flex;align-items:flex-start;gap:8px;background:#fff8e6;border:1px solid #ffe08a;border-radius:10px;padding:10px 12px;font-size:.78rem;color:#7a5c00;margin-bottom:12px;line-height:1.5}
+  .rule-note-icon{font-size:.9rem;flex-shrink:0;margin-top:1px}
+
+  .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+  .sub-label{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;margin-top:2px}
+
+  /* 交通費 */
+  .transport-tabs{display:flex;gap:6px;margin-bottom:14px}
+  .transport-tab{flex:1;padding:9px 8px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-family:var(--sans);font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
+  .transport-tab.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+  .transport-panel{display:none}
+  .transport-panel.active{display:block}
+
+  /* 駅名検索 */
+  .station-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .station-input-wrap{flex:1}
+  .station-input-wrap input{background:var(--white)}
+  .station-arrow{color:var(--muted);font-size:1.1rem;flex-shrink:0}
+  .link-btns{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .link-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:9px;border:none;font-family:var(--sans);font-size:.76rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+  .link-btn.disabled{opacity:.35;pointer-events:none}
+  .link-btn-yahoo{background:#ff0033;color:#fff}
+  .link-btn-yahoo:not(.disabled):hover{background:#cc0028;transform:translateY(-1px)}
+  .link-btn-google{background:#4285f4;color:#fff}
+  .link-btn-google:not(.disabled):hover{background:#2b6fd6;transform:translateY(-1px)}
+  .link-btn-navitime{background:#00a0e9;color:#fff}
+  .link-btn-navitime:not(.disabled):hover{background:#0080be;transform:translateY(-1px)}
+  .link-hint{font-size:.72rem;color:var(--muted);margin-bottom:12px;line-height:1.6;background:var(--bg);border-radius:8px;padding:8px 10px}
+  .route-label{font-size:.75rem;font-weight:700;color:var(--navy);margin-bottom:8px;margin-top:6px}
+
+  /* ===== 交通費・複数入力 ===== */
+  .fare-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+
+  .fare-item{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:8px;
+    align-items:center;
+    background:var(--bg);
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    padding:10px 12px;
+    animation:slideIn .15s ease;
+  }
+  @keyframes slideIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+  .fare-item-main{display:flex;flex-direction:column;gap:6px}
+  .fare-item-name input{
+    background:var(--white);border:1.5px solid var(--border);border-radius:8px;
+    padding:7px 10px;font-size:.82rem;width:100%
+  }
+  .fare-item-name input:focus{border-color:var(--blue)}
+  .fare-item-amount{display:flex;align-items:center;gap:6px}
+  .fare-item-amount input{
+    background:var(--white);border:1.5px solid var(--border);border-radius:8px;
+    padding:7px 10px;font-size:.88rem;font-family:var(--mono);width:120px;text-align:right;padding-right:32px;
+  }
+  .fare-item-amount input:focus{border-color:var(--blue)}
+  .fare-item-amount-wrap{position:relative;display:inline-block}
+  .fare-item-amount-wrap .unit{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.75rem;color:var(--muted);font-family:var(--mono);pointer-events:none}
+
+  .fare-subtotal{
+    font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--muted);
+    white-space:nowrap;text-align:right;padding-top:2px;
+  }
+  .fare-subtotal.has-val{color:var(--blue)}
+
+  .btn-remove-fare{
+    width:28px;height:28px;border-radius:50%;background:none;border:1.5px solid #ffd0d5;
+    color:var(--red);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all .15s;flex-shrink:0;line-height:1;
+  }
+  .btn-remove-fare:hover{background:var(--red-light)}
+
+  .fare-total-row{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--blue-light);border-radius:10px;padding:10px 14px;margin-bottom:10px;
+  }
+  .fare-total-label{font-size:.8rem;font-weight:700;color:var(--blue)}
+  .fare-total-value{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--blue)}
+
+  .btn-add-fare{
+    display:flex;align-items:center;gap:6px;width:100%;padding:10px 14px;
+    background:none;border:1.5px dashed var(--border);border-radius:10px;
+    font-family:var(--sans);font-size:.82rem;font-weight:700;color:var(--muted);
+    cursor:pointer;transition:all .15s;justify-content:center;margin-bottom:2px;
+  }
+  .btn-add-fare:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+
+  /* ===== その他・自由追加 ===== */
+  .other-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+
+  .other-item{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:8px;
+    align-items:center;
+    background:var(--bg);
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    padding:10px 12px;
+    animation:slideIn .15s ease;
+  }
+  .other-item-main{display:flex;flex-direction:column;gap:6px}
+  .other-item-name input{
+    background:var(--white);border:1.5px solid var(--border);border-radius:8px;
+    padding:7px 10px;font-size:.82rem;width:100%
+  }
+  .other-item-name input:focus{border-color:var(--blue)}
+  .other-item-amount{display:flex;align-items:center;gap:6px}
+  .other-item-amount-wrap{position:relative;display:inline-block}
+  .other-item-amount-wrap input{
+    background:var(--white);border:1.5px solid var(--border);border-radius:8px;
+    padding:7px 10px;font-size:.88rem;font-family:var(--mono);width:120px;text-align:right;padding-right:32px
+  }
+  .other-item-amount-wrap input:focus{border-color:var(--blue)}
+  .other-item-amount-wrap .unit{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.75rem;color:var(--muted);font-family:var(--mono);pointer-events:none}
+
+  .btn-remove-other{
+    width:28px;height:28px;border-radius:50%;background:none;border:1.5px solid #ffd0d5;
+    color:var(--red);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all .15s;flex-shrink:0;
+  }
+  .btn-remove-other:hover{background:var(--red-light)}
+
+  .other-total-row{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--orange-light);border-radius:10px;padding:10px 14px;margin-bottom:10px;
+  }
+  .other-total-label{font-size:.8rem;font-weight:700;color:var(--orange)}
+  .other-total-value{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--orange)}
+
+  .btn-add-other{
+    display:flex;align-items:center;gap:6px;width:100%;padding:10px 14px;
+    background:none;border:1.5px dashed var(--border);border-radius:10px;
+    font-family:var(--sans);font-size:.82rem;font-weight:700;color:var(--muted);
+    cursor:pointer;transition:all .15s;justify-content:center;
+  }
+  .btn-add-other:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-light)}
+
+  /* プリセット・共通 */
+  .preset-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .preset-chip{padding:7px 14px;background:var(--navy);color:#fff;border:none;border-radius:20px;font-family:var(--sans);font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .preset-chip:hover{background:var(--blue);transform:translateY(-1px)}
+  .empty-note{font-size:.8rem;color:var(--muted);text-align:center;padding:8px 0}
+
+  .calc-btn{width:100%;padding:16px;background:var(--navy);color:#fff;border:none;border-radius:14px;font-family:var(--sans);font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:.06em;transition:all .2s;box-shadow:0 4px 20px rgba(26,34,64,.2);margin-bottom:14px}
+  .calc-btn:hover{background:var(--blue);transform:translateY(-2px)}
+
+  /* 結果 */
+  .result-section{display:none;background:var(--navy);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg)}
+  .result-section.show{display:block;animation:fadeIn .35s ease}
+  .result-top{padding:24px 20px 20px;text-align:center;border-bottom:1px solid rgba(255,255,255,.08)}
+  .result-label{font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px}
+  .result-amount{font-family:var(--mono);font-size:2.8rem;font-weight:500;color:var(--yellow);letter-spacing:-.02em;line-height:1}
+  .result-amount span{font-size:1.4rem;opacity:.7;margin-right:2px}
+  .result-meta{margin-top:10px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+  .result-meta-item{font-size:.72rem;color:rgba(255,255,255,.35);display:flex;flex-direction:column;align-items:center;gap:2px}
+  .result-meta-item strong{font-family:var(--mono);font-size:.88rem;color:rgba(255,255,255,.6)}
+  .result-body{padding:16px 20px 20px}
+  .breakdown-section-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);margin:12px 0 6px;padding-left:4px}
+  .breakdown-section-label:first-child{margin-top:0}
+  .breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:10px;margin-bottom:5px;background:rgba(255,255,255,.05)}
+  .breakdown-row:hover{background:rgba(255,255,255,.08)}
+  .breakdown-name{display:flex;align-items:center;gap:8px;font-size:.84rem;color:rgba(255,255,255,.65)}
+  .bd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .breakdown-sub{font-size:.7rem;color:rgba(255,255,255,.3);margin-left:4px;font-family:var(--mono)}
+  .breakdown-value{font-family:var(--mono);font-size:.92rem;color:#fff;font-weight:500}
+
+  /* プリセットタブ */
+  /* 食事チェックボックス */
+  .meal-day-settings{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .meal-day-box{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px}
+  .meal-day-label{font-size:.72rem;font-weight:700;color:var(--navy);margin-bottom:10px;letter-spacing:.02em}
+  .meal-checkboxes{display:flex;flex-direction:column;gap:7px}
+  .meal-check{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .meal-check input[type=checkbox]{width:18px;height:18px;border-radius:5px;accent-color:var(--blue);cursor:pointer;flex-shrink:0}
+  .meal-check span{font-size:.84rem;font-weight:500;color:var(--text)}
+  .meal-check input:checked + span{color:var(--blue);font-weight:700}
+
+  /* 履歴 */
+  .btn-clear-history{margin-left:auto;padding:5px 12px;background:none;border:1.5px solid #ffd0d5;color:var(--red);border-radius:8px;font-family:var(--sans);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-clear-history:hover{background:var(--red-light)}
+
+  .history-item{background:var(--white);border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;transition:box-shadow .2s}
+  .history-item:hover{box-shadow:var(--shadow)}
+  .history-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none}
+  .history-header:hover{background:var(--bg)}
+  .history-meta{flex:1;min-width:0}
+  .history-date{font-size:.75rem;color:var(--muted);margin-bottom:3px}
+  .history-period{font-size:.9rem;font-weight:700;color:var(--navy)}
+  .history-total{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--blue);white-space:nowrap}
+  .history-chevron{color:var(--muted);font-size:.8rem;transition:transform .2s;flex-shrink:0}
+  .history-chevron.open{transform:rotate(180deg)}
+
+  .history-detail{display:none;border-top:1px solid var(--border);padding:12px 16px}
+  .history-detail.open{display:block;animation:fadeIn .15s ease}
+  .history-detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.84rem}
+  .history-detail-row:last-child{border-bottom:none}
+  .history-detail-name{color:var(--muted)}
+  .history-detail-val{font-family:var(--mono);font-weight:700;color:var(--navy)}
+
+  .history-actions{display:flex;gap:8px;margin-top:12px}
+  .btn-reuse{flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-reuse:hover{background:var(--blue)}
+  .btn-del-history{padding:9px 14px;background:none;border:1.5px solid #ffd0d5;color:var(--red);border-radius:10px;font-family:var(--sans);font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-del-history:hover{background:var(--red-light)}
+
+  .history-empty{text-align:center;padding:32px 0;color:var(--muted);font-size:.85rem}
+
+  .btn-save{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:12px;font-family:var(--sans);font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
+  .btn-save:hover{opacity:.85;transform:translateY(-1px)}
+  .preset-card{background:var(--white);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .preset-card-name{font-size:.92rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+  .preset-tags{display:flex;flex-wrap:wrap;gap:5px}
+  .ptag{font-size:.7rem;padding:3px 8px;border-radius:6px;font-family:var(--mono);font-weight:500}
+  .ptag-blue{background:var(--blue-light);color:var(--blue)}.ptag-green{background:var(--green-light);color:var(--green)}.ptag-orange{background:var(--orange-light);color:var(--orange)}
+  .btn-del{padding:6px 12px;background:none;border:1.5px solid #ffd0d5;color:var(--red);border-radius:8px;font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer;flex-shrink:0}
+  .btn-del:hover{background:var(--red-light)}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>✈ 出張費計算アプリ</h1>
+  <p>BUSINESS TRIP EXPENSE CALCULATOR</p>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('calc',this)">💼 費用計算</button>
+  <button class="tab-btn" onclick="switchTab('preset',this)">⚙ プリセット管理</button>
+  <button class="tab-btn" onclick="switchTab('history',this)">📋 履歴</button>
+</div>
+
+<div class="main">
+  <div class="tab-content active" id="tab-calc">
+
+    <!-- 期間 -->
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-blue">📅</div><div class="section-title">出張期間</div></div>
+      <div class="section-body">
+        <div class="row-2">
+          <div class="field"><label>出発日</label><input type="date" id="startDate" oninput="updatePeriod()"></div>
+          <div class="field"><label>帰着日</label><input type="date" id="endDate" oninput="updatePeriod()"></div>
+        </div>
+        <div id="periodSummary"></div>
+        <div id="calendarPreview"></div>
+      </div>
+    </div>
+
+    <!-- プリセット適用 -->
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-yellow">⚡</div><div class="section-title">プリセットを適用</div></div>
+      <div class="section-body"><div id="presetApplyArea"><p class="empty-note">「プリセット管理」タブで登録してください</p></div></div>
+    </div>
+
+    <!-- 費用入力 -->
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-green">💴</div><div class="section-title">費用を入力</div></div>
+      <div class="section-body">
+
+        <!-- 日当 -->
+        <div class="sub-label">💰 日当</div>
+        <div class="rule-note"><span class="rule-note-icon">⚠️</span>土曜・日曜は日当が支給されません。<strong>平日のみ</strong>自動計算されます。</div>
+        <div class="row-2">
+          <div class="field"><label>1日あたり</label><div class="input-wrap"><input type="number" id="dailyAllowance" placeholder="3,000" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>対象日数（平日・自動）</label><div class="auto-field" id="dailyDaysAuto">— 日</div></div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- 宿泊費 -->
+        <div class="sub-label">🏨 宿泊費</div>
+        <div class="rule-note" style="background:#e0f8ef;border-color:#7ddfc0;color:#005a3a;"><span class="rule-note-icon">✅</span>土日も含めた<strong>全泊数</strong>で計算されます。</div>
+        <div class="row-2">
+          <div class="field"><label>1泊あたり</label><div class="input-wrap"><input type="number" id="hotelPerNight" placeholder="8,000" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>泊数（全泊・自動）</label><div class="auto-field" id="hotelNightsAuto">— 泊</div></div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- 食費 -->
+        <div class="sub-label">🍽 食費</div>
+        <div class="rule-note"><span class="rule-note-icon">⚠️</span>土曜・日曜は食費が補助されません。<strong>平日のみ</strong>自動計算されます。</div>
+        <div class="row-3">
+          <div class="field"><label>朝食</label><div class="input-wrap"><input type="number" id="breakfast" placeholder="800" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>昼食</label><div class="input-wrap"><input type="number" id="lunch" placeholder="1,000" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>夕食</label><div class="input-wrap"><input type="number" id="dinner" placeholder="1,500" min="0"><span class="unit">円</span></div></div>
+        </div>
+
+        <!-- 出発日・帰着日の食事設定 -->
+        <div class="meal-day-settings">
+          <div class="meal-day-box">
+            <div class="meal-day-label">✈️ 出発日に支給される食事</div>
+            <div class="meal-checkboxes">
+              <label class="meal-check"><input type="checkbox" id="goBreakfast"> <span>朝食</span></label>
+              <label class="meal-check"><input type="checkbox" id="goLunch" checked> <span>昼食</span></label>
+              <label class="meal-check"><input type="checkbox" id="goDinner" checked> <span>夕食</span></label>
+            </div>
+          </div>
+          <div class="meal-day-box">
+            <div class="meal-day-label">🏠 帰着日に支給される食事</div>
+            <div class="meal-checkboxes">
+              <label class="meal-check"><input type="checkbox" id="backBreakfast" checked> <span>朝食</span></label>
+              <label class="meal-check"><input type="checkbox" id="backLunch" checked> <span>昼食</span></label>
+              <label class="meal-check"><input type="checkbox" id="backDinner"> <span>夕食</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="max-width:55%;margin-top:10px"><label>食費対象日数（平日・自動）</label><div class="auto-field" id="mealDaysAuto">— 日</div></div>
+
+        <hr class="divider">
+
+        <!-- 交通費 -->
+        <div class="sub-label">🚃 交通費</div>
+        <div class="transport-tabs">
+          <button class="transport-tab active" onclick="switchTransTab('station',this)">🚉 駅名で検索</button>
+          <button class="transport-tab" onclick="switchTransTab('manual',this)">✏️ 金額を入力</button>
+        </div>
+
+        <!-- 駅名パネル -->
+        <div class="transport-panel active" id="panel-station">
+          <div class="route-label">↗ 往路</div>
+          <div class="station-row">
+            <div class="station-input-wrap"><input type="text" id="fromGo" placeholder="出発駅（例: 大阪）" oninput="updateLinks()"></div>
+            <div class="station-arrow">→</div>
+            <div class="station-input-wrap"><input type="text" id="toGo" placeholder="到着駅（例: 東京）" oninput="updateLinks()"></div>
+          </div>
+          <div class="link-btns">
+            <a class="link-btn link-btn-yahoo disabled" id="yahooGo" href="#" target="_blank" rel="noopener">🔴 Yahoo!路線</a>
+            <a class="link-btn link-btn-google disabled" id="googleGo" href="#" target="_blank" rel="noopener">🔵 Googleマップ</a>
+            <a class="link-btn link-btn-navitime disabled" id="navitimeGo" href="#" target="_blank" rel="noopener">🟦 NAVITIME</a>
+          </div>
+
+          <div class="route-label" style="margin-top:4px">↙ 復路</div>
+          <div class="station-row">
+            <div class="station-input-wrap"><input type="text" id="fromBack" placeholder="出発駅（例: 東京）" oninput="updateLinks()"></div>
+            <div class="station-arrow">→</div>
+            <div class="station-input-wrap"><input type="text" id="toBack" placeholder="到着駅（例: 大阪）" oninput="updateLinks()"></div>
+          </div>
+          <div class="link-btns">
+            <a class="link-btn link-btn-yahoo disabled" id="yahooBack" href="#" target="_blank" rel="noopener">🔴 Yahoo!路線</a>
+            <a class="link-btn link-btn-google disabled" id="googleBack" href="#" target="_blank" rel="noopener">🔵 Googleマップ</a>
+            <a class="link-btn link-btn-navitime disabled" id="navitimeBack" href="#" target="_blank" rel="noopener">🟦 NAVITIME</a>
+          </div>
+          <div class="link-hint">💡 駅名を入力するとボタンが有効になります。各サービスで運賃を確認後、下の明細に入力してください。</div>
+        </div>
+
+        <!-- 金額入力パネル（ダミー：明細は共通で使うためこのパネルは空） -->
+        <div class="transport-panel" id="panel-manual"></div>
+
+        <!-- 往路の明細 -->
+        <div class="route-label">📋 往路の明細（複数追加可）</div>
+        <div class="fare-list" id="fareListGo"></div>
+        <div class="fare-total-row" id="fareTotalGo" style="display:none">
+          <span class="fare-total-label">往路 小計</span>
+          <span class="fare-total-value" id="fareTotalGoVal">¥0</span>
+        </div>
+        <button class="btn-add-fare" onclick="addFare('Go')">＋ 往路の費用を追加</button>
+
+        <div style="margin-top:12px"></div>
+
+        <!-- 復路の明細 -->
+        <div class="route-label">📋 復路の明細（複数追加可）</div>
+        <div class="fare-list" id="fareListBack"></div>
+        <div class="fare-total-row" id="fareTotalBack" style="display:none">
+          <span class="fare-total-label">復路 小計</span>
+          <span class="fare-total-value" id="fareTotalBackVal">¥0</span>
+        </div>
+        <button class="btn-add-fare" onclick="addFare('Back')">＋ 復路の費用を追加</button>
+
+        <hr class="divider">
+
+        <!-- ガソリン -->
+        <div class="sub-label">⛽ ガソリン代</div>
+        <div class="row-3">
+          <div class="field"><label>走行距離</label><div class="input-wrap"><input type="number" id="gasKm" placeholder="100" min="0"><span class="unit">km</span></div></div>
+          <div class="field"><label>燃費</label><div class="input-wrap"><input type="number" id="gasMileage" placeholder="15" min="0"><span class="unit">km/L</span></div></div>
+          <div class="field"><label>ガソリン単価</label><div class="input-wrap"><input type="number" id="gasPrice" placeholder="160" min="0"><span class="unit">円/L</span></div></div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- その他（自由追加） -->
+        <div class="sub-label">📋 その他</div>
+        <div class="other-list" id="otherList"></div>
+        <div class="other-total-row" id="otherTotalRow" style="display:none">
+          <span class="other-total-label">その他 小計</span>
+          <span class="other-total-value" id="otherTotalVal">¥0</span>
+        </div>
+        <button class="btn-add-other" onclick="addOther()">＋ 項目を追加</button>
+
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">合計金額を計算する →</button>
+
+    <div class="result-section" id="resultCard">
+      <div class="result-top">
+        <div class="result-label">出張費合計</div>
+        <div class="result-amount"><span>¥</span><span id="totalAmount">0</span></div>
+        <div class="result-meta" id="resultMeta"></div>
+      </div>
+      <div class="result-body" id="breakdown"></div>
+    </div>
+
+  </div>
+
+  <!-- プリセットタブ -->
+  <div class="tab-content" id="tab-preset">
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-blue">✚</div><div class="section-title">新しいプリセットを登録</div></div>
+      <div class="section-body">
+        <div class="field"><label>プリセット名</label><input type="text" id="presetName" placeholder="例: 国内出張スタンダード"></div>
+        <div class="row-2">
+          <div class="field"><label>日当（円/日）</label><div class="input-wrap"><input type="number" id="pDailyAllowance" placeholder="3,000" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>宿泊費（円/泊）</label><div class="input-wrap"><input type="number" id="pHotel" placeholder="8,000" min="0"><span class="unit">円</span></div></div>
+        </div>
+        <div class="row-3">
+          <div class="field"><label>朝食（円）</label><div class="input-wrap"><input type="number" id="pBreakfast" placeholder="800" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>昼食（円）</label><div class="input-wrap"><input type="number" id="pLunch" placeholder="1,000" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>夕食（円）</label><div class="input-wrap"><input type="number" id="pDinner" placeholder="1,500" min="0"><span class="unit">円</span></div></div>
+        </div>
+        <div class="row-2">
+          <div class="field"><label>燃費（km/L）</label><div class="input-wrap"><input type="number" id="pMileage" placeholder="15" min="0"><span class="unit">km/L</span></div></div>
+          <div class="field"><label>ガソリン単価（円/L）</label><div class="input-wrap"><input type="number" id="pGasPrice" placeholder="160" min="0"><span class="unit">円</span></div></div>
+        </div>
+        <button class="btn-save" onclick="savePreset()">✚ プリセットを保存する</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-orange">📋</div><div class="section-title">保存済みプリセット</div></div>
+      <div class="section-body"><div id="presetList"><p class="empty-note">プリセットはまだありません</p></div></div>
+    </div>
+  
+  <!-- 履歴タブ -->
+  <div class="tab-content" id="tab-history">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-icon icon-blue">📋</div>
+        <div class="section-title">出張履歴</div>
+        <button class="btn-clear-history" onclick="clearAllHistory()">全削除</button>
+      </div>
+      <div class="section-body">
+        <div id="historyList"><p class="empty-note">履歴はまだありません</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+  let presets = JSON.parse(localStorage.getItem('bt_presets_v5') || '[]');
+  const dotColors = ['#2f6bff','#00b87a','#ff7240','#ffc233','#ff4d6a','#9b6fff'];
+  const DAYS_JA = ['日','月','火','水','木','金','土'];
+  let transTab = 'station';
+  let fareIdGo = 0, fareIdBack = 0, otherIdCount = 0;
+
+  // ===== 交通費タブ =====
+  function switchTransTab(tab, btn) {
+    transTab = tab;
+    document.querySelectorAll('.transport-tab').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.transport-panel').forEach(e => e.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById('panel-' + tab);
+    if (panel) panel.classList.add('active');
+  }
+
+  // ===== 路線リンク =====
+  function updateLinks() {
+    setLinks(document.getElementById('fromGo').value.trim(), document.getElementById('toGo').value.trim(), 'yahooGo','googleGo','navitimeGo');
+    setLinks(document.getElementById('fromBack').value.trim(), document.getElementById('toBack').value.trim(), 'yahooBack','googleBack','navitimeBack');
+  }
+  function setLinks(from, to, yId, gId, nId) {
+    const ok = from && to;
+    const y = document.getElementById(yId), g = document.getElementById(gId), n = document.getElementById(nId);
+    if (ok) {
+      const f = encodeURIComponent(from+'駅'), t = encodeURIComponent(to+'駅');
+      y.href = `https://transit.yahoo.co.jp/search/print?from=${f}&to=${t}&type=1&ws=3&s=0&expkind=1&userpass=1&al=1&shin=1&ex=1&hb=1&lb=1&sr=1`;
+      g.href = `https://www.google.com/maps/dir/${f}/${t}/?travelmode=transit&hl=ja`;
+      n.href = `https://www.navitime.co.jp/transfer/searchlist?orvStationName=${encodeURIComponent(from)}&dnvStationName=${encodeURIComponent(to)}`;
+      [y,g,n].forEach(e => e.classList.remove('disabled'));
+    } else {
+      [y,g,n].forEach(e => { e.href='#'; e.classList.add('disabled'); });
+    }
+  }
+
+  // ===== 交通費明細 =====
+  function addFare(dir) {
+    const id = dir === 'Go' ? ++fareIdGo : ++fareIdBack;
+    const uid = `fare${dir}_${id}`;
+    const list = document.getElementById('fareList' + dir);
+    const div = document.createElement('div');
+    div.className = 'fare-item';
+    div.id = uid;
+    div.innerHTML = `
+      <div class="fare-item-main">
+        <div class="fare-item-name">
+          <input type="text" placeholder="内容（例: 新幹線自由席、領収書分）" oninput="updateFareTotal('${dir}')">
+        </div>
+        <div class="fare-item-amount">
+          <div class="fare-item-amount-wrap">
+            <input type="number" placeholder="0" min="0" oninput="updateFareTotal('${dir}')">
+            <span class="unit">円</span>
+          </div>
+        </div>
+      </div>
+      <span class="fare-subtotal" id="${uid}_sub">—</span>
+      <button class="btn-remove-fare" onclick="removeFare('${uid}','${dir}')" title="削除">×</button>
+    `;
+    list.appendChild(div);
+    updateFareTotal(dir);
+    div.querySelector('input[type=text]').focus();
+  }
+
+  function removeFare(uid, dir) {
+    const el = document.getElementById(uid);
+    if (el) el.remove();
+    updateFareTotal(dir);
+  }
+
+  function updateFareTotal(dir) {
+    const list = document.getElementById('fareList' + dir);
+    const items = list.querySelectorAll('.fare-item');
+    let total = 0;
+    items.forEach(item => {
+      const amtInput = item.querySelector('input[type=number]');
+      const amt = parseFloat(amtInput.value) || 0;
+      total += amt;
+      const subEl = item.querySelector('.fare-subtotal');
+      if (amt > 0) {
+        subEl.textContent = '¥' + amt.toLocaleString();
+        subEl.classList.add('has-val');
+      } else {
+        subEl.textContent = '—';
+        subEl.classList.remove('has-val');
+      }
+    });
+    const totalRow = document.getElementById('fareTotal' + dir);
+    const totalVal = document.getElementById('fareTotal' + dir + 'Val');
+    if (items.length > 0) {
+      totalRow.style.display = 'flex';
+      totalVal.textContent = '¥' + total.toLocaleString();
+    } else {
+      totalRow.style.display = 'none';
+    }
+  }
+
+  function getFareTotal(dir) {
+    const list = document.getElementById('fareList' + dir);
+    let total = 0;
+    list.querySelectorAll('.fare-item input[type=number]').forEach(inp => {
+      total += parseFloat(inp.value) || 0;
+    });
+    return total;
+  }
+
+  function getFareItems(dir) {
+    const list = document.getElementById('fareList' + dir);
+    const result = [];
+    list.querySelectorAll('.fare-item').forEach(item => {
+      const name = item.querySelector('input[type=text]').value.trim() || '（未入力）';
+      const amt = parseFloat(item.querySelector('input[type=number]').value) || 0;
+      if (amt > 0) result.push({ name, amt });
+    });
+    return result;
+  }
+
+  // ===== その他明細 =====
+  function addOther() {
+    const id = ++otherIdCount;
+    const uid = `other_${id}`;
+    const list = document.getElementById('otherList');
+    const div = document.createElement('div');
+    div.className = 'other-item';
+    div.id = uid;
+    div.innerHTML = `
+      <div class="other-item-main">
+        <div class="other-item-name">
+          <input type="text" placeholder="項目名（例: 駐車場代、バス代）" oninput="updateOtherTotal()">
+        </div>
+        <div class="other-item-amount">
+          <div class="other-item-amount-wrap">
+            <input type="number" placeholder="0" min="0" oninput="updateOtherTotal()">
+            <span class="unit">円</span>
+          </div>
+        </div>
+      </div>
+      <span></span>
+      <button class="btn-remove-other" onclick="removeOther('${uid}')" title="削除">×</button>
+    `;
+    list.appendChild(div);
+    updateOtherTotal();
+    div.querySelector('input[type=text]').focus();
+  }
+
+  function removeOther(uid) {
+    const el = document.getElementById(uid);
+    if (el) el.remove();
+    updateOtherTotal();
+  }
+
+  function updateOtherTotal() {
+    const list = document.getElementById('otherList');
+    const items = list.querySelectorAll('.other-item');
+    let total = 0;
+    items.forEach(item => {
+      total += parseFloat(item.querySelector('input[type=number]').value) || 0;
+    });
+    const row = document.getElementById('otherTotalRow');
+    const val = document.getElementById('otherTotalVal');
+    if (items.length > 0) {
+      row.style.display = 'flex';
+      val.textContent = '¥' + total.toLocaleString();
+    } else {
+      row.style.display = 'none';
+    }
+  }
+
+  function getOtherItems() {
+    const list = document.getElementById('otherList');
+    const result = [];
+    list.querySelectorAll('.other-item').forEach(item => {
+      const name = item.querySelector('input[type=text]').value.trim() || '（未入力）';
+      const amt = parseFloat(item.querySelector('input[type=number]').value) || 0;
+      if (amt > 0) result.push({ name, amt });
+    });
+    return result;
+  }
+
+  // ===== 期間計算 =====
+  function getDays(s, e) {
+    const days = [], cur = new Date(s); cur.setHours(0,0,0,0);
+    const end = new Date(e); end.setHours(0,0,0,0);
+    while (cur <= end) { days.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+    return days;
+  }
+  function isWE(d) { return d.getDay()===0 || d.getDay()===6; }
+  function calcStats(s, e) {
+    if (!s||!e) return null;
+    const start = new Date(s), end = new Date(e);
+    if (end <= start) return null;
+    const days = getDays(start, end);
+    const we = days.filter(d => isWE(d)).length;
+    return { totalDays:days.length, weekdayDays:days.length-we, weekendDays:we, nights:days.length-1, days };
+  }
+
+  function updatePeriod() {
+    const s = document.getElementById('startDate').value, e = document.getElementById('endDate').value;
+    const st = calcStats(s, e);
+    if (!st) { document.getElementById('periodSummary').innerHTML=''; document.getElementById('calendarPreview').innerHTML=''; clearAuto(); return; }
+    document.getElementById('periodSummary').innerHTML = `<div class="period-summary">
+      <div class="period-box pb-total"><div class="pb-num">${st.totalDays}</div><div class="pb-label">合計日数</div></div>
+      <div class="period-box pb-weekday"><div class="pb-num">${st.weekdayDays}</div><div class="pb-label">平日（補助あり）</div></div>
+      <div class="period-box pb-weekend"><div class="pb-num">${st.weekendDays}</div><div class="pb-label">土日（補助なし）</div></div>
+    </div>`;
+    const show = st.days.slice(0,21);
+    const more = st.days.length>21 ? `<span style="color:var(--muted);font-size:.75rem;align-self:center;margin-left:4px">+${st.days.length-21}日...</span>` : '';
+    document.getElementById('calendarPreview').innerHTML = `<div class="calendar-preview">
+      ${show.map(d=>`<div class="cal-day ${isWE(d)?'cal-weekend':'cal-weekday'}" title="${d.toLocaleDateString('ja-JP')}（${DAYS_JA[d.getDay()]}）">
+        <span style="display:flex;flex-direction:column;align-items:center;line-height:1.1">
+          <span style="font-size:.65em;opacity:.7">${DAYS_JA[d.getDay()]}</span>
+          <span>${d.getDate()}</span>
+        </span>
+      </div>`).join('')}${more}
+      <div class="cal-label">
+        <div class="cal-legend"><div class="cal-dot" style="background:var(--green-light);border:1px solid var(--green)"></div>平日</div>
+        <div class="cal-legend"><div class="cal-dot" style="background:var(--red-light);border:1px solid var(--red)"></div>土日</div>
+      </div>
+    </div>`;
+    setAuto('dailyDaysAuto', `${st.weekdayDays} 日`, st.weekdayDays>0);
+    setAuto('hotelNightsAuto', `${st.nights} 泊`, st.nights>0);
+    setAuto('mealDaysAuto', `${st.weekdayDays} 日`, st.weekdayDays>0);
+  }
+
+  function setAuto(id, text, has) { const el=document.getElementById(id); el.textContent=text; el.className='auto-field'+(has?' has-value':''); }
+  function clearAuto() { setAuto('dailyDaysAuto','— 日',false); setAuto('hotelNightsAuto','— 泊',false); setAuto('mealDaysAuto','— 日',false); }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
+    document.getElementById('tab-'+tab).classList.add('active'); btn.classList.add('active');
+    if (tab==='calc') renderPresetApply();
+  }
+
+  function v(id) { return parseFloat(document.getElementById(id).value)||0; }
+
+  // ===== 計算 =====
+  function calculate() {
+    const s = document.getElementById('startDate').value, e = document.getElementById('endDate').value;
+    const st = calcStats(s, e);
+    if (!st) { alert('出張期間を正しく入力してください'); return; }
+
+    const wd = st.weekdayDays, ni = st.nights;
+    const daily = v('dailyAllowance') * wd;
+    const hotel = v('hotelPerNight') * ni;
+
+    // 食費計算（出発日・帰着日・中間日で食事内容が異なる）
+    const b = v('breakfast'), l = v('lunch'), d = v('dinner');
+    const fullMeal = b + l + d;
+
+    // 出発日チェック（平日かどうか）
+    const startIsWeekday = !isWE(new Date(s));
+    const goMeal = (document.getElementById('goBreakfast').checked ? b : 0)
+                 + (document.getElementById('goLunch').checked     ? l : 0)
+                 + (document.getElementById('goDinner').checked     ? d : 0);
+
+    // 帰着日チェック（平日かどうか）
+    const endIsWeekday = !isWE(new Date(e));
+    const backMeal = (document.getElementById('backBreakfast').checked ? b : 0)
+                   + (document.getElementById('backLunch').checked      ? l : 0)
+                   + (document.getElementById('backDinner').checked      ? d : 0);
+
+    // 中間日（出発日・帰着日を除いた平日数）
+    const middleWeekdays = Math.max(0, wd - (startIsWeekday ? 1 : 0) - (endIsWeekday ? 1 : 0));
+
+    const meals = (startIsWeekday ? goMeal : 0)
+                + (endIsWeekday   ? backMeal : 0)
+                + fullMeal * middleWeekdays;
+
+    // 内訳表示用
+    const mealPer = fullMeal;
+    const fareGo = getFareTotal('Go');
+    const fareBack = getFareTotal('Back');
+    const transport = fareGo + fareBack;
+    const km=v('gasKm'), mil=v('gasMileage'), gp=v('gasPrice');
+    const gas = mil>0 ? (km/mil)*gp : 0;
+    const otherItems = getOtherItems();
+    const otherTotal = otherItems.reduce((s,i)=>s+i.amt, 0);
+    const total = daily+hotel+meals+transport+gas+otherTotal;
+
+    document.getElementById('totalAmount').textContent = Math.round(total).toLocaleString();
+    document.getElementById('resultMeta').innerHTML = `
+      <div class="result-meta-item"><strong>${st.totalDays}日間</strong>合計</div>
+      <div class="result-meta-item"><strong>${wd}日</strong>平日</div>
+      <div class="result-meta-item"><strong>${ni}泊</strong>宿泊</div>
+      ${st.weekendDays>0?`<div class="result-meta-item"><strong>${st.weekendDays}日</strong>土日除外</div>`:''}`;
+
+    let html = '';
+
+    // 補助対象（平日）
+    if (daily>0 || meals>0) {
+      html += `<div class="breakdown-section-label">補助対象（平日のみ）</div>`;
+      if (daily>0) html += bdRow('#2f6bff','日当',`¥${v('dailyAllowance').toLocaleString()} × ${wd}日`,daily);
+      if (meals>0) {
+        if (middleWeekdays>0 && fullMeal>0) html += bdRow('#ff7240','食費（中間日）',`¥${fullMeal.toLocaleString()} × ${middleWeekdays}日`, fullMeal*middleWeekdays);
+        if (startIsWeekday && goMeal>0) html += bdRow('#ff7240','食費（出発日）','', goMeal);
+        if (endIsWeekday && backMeal>0 && st.totalDays>1) html += bdRow('#ff7240','食費（帰着日）','', backMeal);
+        if ((middleWeekdays>0?1:0)+(startIsWeekday&&goMeal>0?1:0)+(endIsWeekday&&backMeal>0&&st.totalDays>1?1:0) > 1)
+          html += bdRowSum('食費 小計', meals);
+      }
+    }
+
+    // 宿泊費
+    if (hotel>0) {
+      html += `<div class="breakdown-section-label">宿泊費（全泊）</div>`;
+      html += bdRow('#00b87a','宿泊費',`¥${v('hotelPerNight').toLocaleString()} × ${ni}泊`,hotel);
+    }
+
+    // 交通費（往路・復路ごとに内訳）
+    const fareGoItems = getFareItems('Go');
+    const fareBackItems = getFareItems('Back');
+    if (fareGoItems.length>0 || fareBackItems.length>0) {
+      html += `<div class="breakdown-section-label">交通費</div>`;
+      fareGoItems.forEach(i => html += bdRow('#ffc233', `↗ ${i.name}`, '', i.amt));
+      if (fareGo>0 && fareGoItems.length>1) html += bdRowSum('往路 小計', fareGo);
+      fareBackItems.forEach(i => html += bdRow('#ffc233', `↙ ${i.name}`, '', i.amt));
+      if (fareBack>0 && fareBackItems.length>1) html += bdRowSum('復路 小計', fareBack);
+    }
+
+    // ガソリン
+    if (gas>0) {
+      html += `<div class="breakdown-section-label">ガソリン代</div>`;
+      html += bdRow('#ff4d6a','ガソリン代',`${km}km ÷ ${mil}km/L × ¥${gp}`,gas);
+    }
+
+    // その他
+    if (otherItems.length>0) {
+      html += `<div class="breakdown-section-label">その他費用</div>`;
+      otherItems.forEach((item,i) => html += bdRow(dotColors[i%dotColors.length], item.name, '', item.amt));
+      if (otherItems.length>1) html += bdRowSum('その他 小計', otherTotal);
+    }
+
+    document.getElementById('breakdown').innerHTML = html;
+    const rc = document.getElementById('resultCard');
+    rc.classList.remove('show'); void rc.offsetWidth; rc.classList.add('show');
+    setTimeout(()=>rc.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+
+    // 履歴に保存
+    const breakdownForHistory = [];
+    if (daily>0) breakdownForHistory.push({name:'日当', value:daily});
+    if (meals>0) breakdownForHistory.push({name:'食費', value:meals});
+    if (hotel>0) breakdownForHistory.push({name:'宿泊費', value:hotel});
+    if (transport>0) breakdownForHistory.push({name:'交通費', value:transport});
+    if (gas>0) breakdownForHistory.push({name:'ガソリン代', value:gas});
+    if (otherTotal>0) breakdownForHistory.push({name:'その他', value:otherTotal});
+
+    saveHistory({
+      startDate: s, endDate: e,
+      totalDays: st.totalDays, nights: ni, weekdayDays: wd,
+      total,
+      breakdown: breakdownForHistory,
+      inputs: {
+        startDate: s, endDate: e,
+        dailyAllowance: v('dailyAllowance'),
+        hotelPerNight: v('hotelPerNight'),
+        breakfast: v('breakfast'), lunch: v('lunch'), dinner: v('dinner'),
+        goBreakfast: document.getElementById('goBreakfast').checked,
+        goLunch: document.getElementById('goLunch').checked,
+        goDinner: document.getElementById('goDinner').checked,
+        backBreakfast: document.getElementById('backBreakfast').checked,
+        backLunch: document.getElementById('backLunch').checked,
+        backDinner: document.getElementById('backDinner').checked,
+        gasKm: v('gasKm'), gasMileage: v('gasMileage'), gasPrice: v('gasPrice'),
+        fareGo: getFareItems('Go'),
+        fareBack: getFareItems('Back'),
+        otherItems: getOtherItems(),
+      }
+    });
+    renderHistory();
+  }
+
+  function bdRow(color, name, sub, val) {
+    return `<div class="breakdown-row">
+      <div class="breakdown-name"><div class="bd-dot" style="background:${color}"></div>${name}${sub?`<span class="breakdown-sub">${sub}</span>`:''}</div>
+      <div class="breakdown-value">¥${Math.round(val).toLocaleString()}</div>
+    </div>`;
+  }
+  function bdRowSum(label, val) {
+    return `<div class="breakdown-row" style="background:rgba(255,255,255,0.1)">
+      <div class="breakdown-name" style="color:rgba(255,255,255,0.9);font-weight:700;padding-left:16px">　${label}</div>
+      <div class="breakdown-value" style="color:var(--yellow)">¥${Math.round(val).toLocaleString()}</div>
+    </div>`;
+  }
+
+  // ===== プリセット =====
+  function savePreset() {
+    const name = document.getElementById('presetName').value.trim();
+    if (!name) { alert('プリセット名を入力してください'); return; }
+    presets.push({ id:Date.now(), name, dailyAllowance:v('pDailyAllowance'), hotel:v('pHotel'), breakfast:v('pBreakfast'), lunch:v('pLunch'), dinner:v('pDinner'), mileage:v('pMileage'), gasPrice:v('pGasPrice') });
+    saveToLS(); renderPresets(); renderPresetApply();
+    ['presetName','pDailyAllowance','pHotel','pBreakfast','pLunch','pDinner','pMileage','pGasPrice'].forEach(id=>document.getElementById(id).value='');
+  }
+  function deletePreset(id) { if (!confirm('削除しますか？')) return; presets=presets.filter(p=>p.id!==id); saveToLS(); renderPresets(); renderPresetApply(); }
+  function applyPreset(id) {
+    const p = presets.find(x=>x.id===id); if(!p) return;
+    const set = (el,val)=>{ if(val) document.getElementById(el).value=val; };
+    set('dailyAllowance',p.dailyAllowance); set('hotelPerNight',p.hotel);
+    set('breakfast',p.breakfast); set('lunch',p.lunch); set('dinner',p.dinner);
+    set('gasMileage',p.mileage); set('gasPrice',p.gasPrice);
+  }
+  function saveToLS() { localStorage.setItem('bt_presets_v5',JSON.stringify(presets)); }
+  function renderPresets() {
+    const el = document.getElementById('presetList');
+    if (!presets.length) { el.innerHTML='<p class="empty-note">プリセットはまだありません</p>'; return; }
+    el.innerHTML = presets.map(p=>`<div class="preset-card">
+      <div style="flex:1;min-width:0">
+        <div class="preset-card-name">${p.name}</div>
+        <div class="preset-tags">
+          ${p.dailyAllowance?`<span class="ptag ptag-blue">日当 ¥${p.dailyAllowance.toLocaleString()}</span>`:''}
+          ${p.hotel?`<span class="ptag ptag-green">宿泊 ¥${p.hotel.toLocaleString()}</span>`:''}
+          ${(p.breakfast||p.lunch||p.dinner)?`<span class="ptag ptag-orange">食費 ¥${(p.breakfast+p.lunch+p.dinner).toLocaleString()}/日</span>`:''}
+          ${p.mileage?`<span class="ptag ptag-blue">燃費 ${p.mileage}km/L</span>`:''}
+        </div>
+      </div>
+      <button class="btn-del" onclick="deletePreset(${p.id})">削除</button>
+    </div>`).join('');
+  }
+  function renderPresetApply() {
+    const el = document.getElementById('presetApplyArea');
+    if (!presets.length) { el.innerHTML='<p class="empty-note">「プリセット管理」タブで登録してください</p>'; return; }
+    el.innerHTML = '<div class="preset-chips">'+presets.map(p=>`<button class="preset-chip" onclick="applyPreset(${p.id})">⚡ ${p.name}</button>`).join('')+'</div>';
+  }
+
+
+  // ===== 履歴 =====
+  let histories = JSON.parse(localStorage.getItem('bt_history_v5') || '[]');
+  const MAX_HISTORY = 30;
+
+  function saveHistory(data) {
+    const entry = {
+      id: Date.now(),
+      savedAt: new Date().toLocaleString('ja-JP'),
+      startDate: data.startDate,
+      endDate: data.endDate,
+      totalDays: data.totalDays,
+      nights: data.nights,
+      weekdayDays: data.weekdayDays,
+      total: data.total,
+      breakdown: data.breakdown, // [{name, value}]
+      inputs: data.inputs,       // 再利用用の入力値
+    };
+    histories.unshift(entry);
+    if (histories.length > MAX_HISTORY) histories = histories.slice(0, MAX_HISTORY);
+    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
+  }
+
+  function deleteHistory(id) {
+    if (!confirm('この履歴を削除しますか？')) return;
+    histories = histories.filter(h => h.id !== id);
+    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
+    renderHistory();
+  }
+
+  function clearAllHistory() {
+    if (!confirm('履歴をすべて削除しますか？')) return;
+    histories = [];
+    localStorage.setItem('bt_history_v5', JSON.stringify(histories));
+    renderHistory();
+  }
+
+  function toggleHistoryDetail(id) {
+    const detail = document.getElementById('hdetail_' + id);
+    const chevron = document.getElementById('hchevron_' + id);
+    if (!detail) return;
+    detail.classList.toggle('open');
+    chevron.classList.toggle('open');
+  }
+
+  function reuseHistory(id) {
+    const h = histories.find(x => x.id === id);
+    if (!h || !h.inputs) return;
+    const inp = h.inputs;
+    const setVal = (elId, val) => { const el = document.getElementById(elId); if (el && val !== undefined && val !== null) el.value = val; };
+    const setChk = (elId, val) => { const el = document.getElementById(elId); if (el) el.checked = !!val; };
+
+    setVal('startDate', inp.startDate);
+    setVal('endDate', inp.endDate);
+    setVal('dailyAllowance', inp.dailyAllowance);
+    setVal('hotelPerNight', inp.hotelPerNight);
+    setVal('breakfast', inp.breakfast);
+    setVal('lunch', inp.lunch);
+    setVal('dinner', inp.dinner);
+    setChk('goBreakfast', inp.goBreakfast);
+    setChk('goLunch', inp.goLunch);
+    setChk('goDinner', inp.goDinner);
+    setChk('backBreakfast', inp.backBreakfast);
+    setChk('backLunch', inp.backLunch);
+    setChk('backDinner', inp.backDinner);
+    setVal('gasKm', inp.gasKm);
+    setVal('gasMileage', inp.gasMileage);
+    setVal('gasPrice', inp.gasPrice);
+
+    // 交通費・その他は一旦クリアして再追加
+    document.getElementById('fareListGo').innerHTML = '';
+    document.getElementById('fareListBack').innerHTML = '';
+    document.getElementById('otherList').innerHTML = '';
+    fareIdGo = 0; fareIdBack = 0; otherIdCount = 0;
+
+    if (inp.fareGo && inp.fareGo.length > 0) {
+      inp.fareGo.forEach(f => { addFare('Go'); const items = document.getElementById('fareListGo').querySelectorAll('.fare-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = f.name; last.querySelector('input[type=number]').value = f.amt; });
+    } else { addFare('Go'); }
+
+    if (inp.fareBack && inp.fareBack.length > 0) {
+      inp.fareBack.forEach(f => { addFare('Back'); const items = document.getElementById('fareListBack').querySelectorAll('.fare-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = f.name; last.querySelector('input[type=number]').value = f.amt; });
+    } else { addFare('Back'); }
+
+    if (inp.otherItems && inp.otherItems.length > 0) {
+      inp.otherItems.forEach(o => { addOther(); const items = document.getElementById('otherList').querySelectorAll('.other-item'); const last = items[items.length-1]; last.querySelector('input[type=text]').value = o.name; last.querySelector('input[type=number]').value = o.amt; });
+    } else { addOther(); }
+
+    updatePeriod();
+    updateFareTotal('Go'); updateFareTotal('Back'); updateOtherTotal();
+
+    // 計算タブへ移動
+    switchTab('calc', document.querySelector('.tab-btn'));
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function renderHistory() {
+    const el = document.getElementById('historyList');
+    if (!el) return;
+    if (!histories.length) {
+      el.innerHTML = '<div class="history-empty">📭 履歴はまだありません<br><span style="font-size:.75rem">計算するたびに自動保存されます</span></div>';
+      return;
+    }
+    el.innerHTML = histories.map(h => {
+      const period = `${h.startDate} 〜 ${h.endDate}`;
+      const summary = `${h.totalDays}日間 / ${h.nights}泊 / 平日${h.weekdayDays}日`;
+      return `<div class="history-item">
+        <div class="history-header" onclick="toggleHistoryDetail(${h.id})">
+          <div class="history-meta">
+            <div class="history-date">📅 ${h.savedAt}</div>
+            <div class="history-period">${period}<span style="font-size:.72rem;color:var(--muted);margin-left:8px">${summary}</span></div>
+          </div>
+          <div class="history-total">¥${Math.round(h.total).toLocaleString()}</div>
+          <div class="history-chevron" id="hchevron_${h.id}">▼</div>
+        </div>
+        <div class="history-detail" id="hdetail_${h.id}">
+          ${h.breakdown.map(b => `<div class="history-detail-row"><span class="history-detail-name">${b.name}</span><span class="history-detail-val">¥${Math.round(b.value).toLocaleString()}</span></div>`).join('')}
+          <div class="history-actions">
+            <button class="btn-reuse" onclick="reuseHistory(${h.id})">↩ この内容で再計算</button>
+            <button class="btn-del-history" onclick="deleteHistory(${h.id})">削除</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // 初期化
+  document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+  renderPresets(); renderPresetApply(); renderHistory();
+  // デフォルトで往路・復路それぞれ1行追加
+  addFare('Go'); addFare('Back');
+  addOther();
+</script>
+</body>
+</html>
