@@ -297,7 +297,7 @@
   .btn-del:hover{background:var(--red-light)}
 </style>
 </head>
-<body>
+<body onload="window.scrollTo(0,0)">
 
 <div class="app-header">
   <h1>✈ 出張費計算アプリ</h1>
@@ -1079,12 +1079,64 @@
 
 
   // 初期化
+  if (history.scrollRestoration) history.scrollRestoration = "manual";
   window.scrollTo(0, 0);
   document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
   renderPresets(); renderPresetApply(); renderHistory();
-  // デフォルトで往路・復路それぞれ1行追加
-  addFare('Go'); addFare('Back');
-  addOther();
+  // デフォルトで往路・復路それぞれ1行追加（初期表示なのでfocusしない）
+  function addFareNoFocus(dir) {
+    const id = dir === 'Go' ? ++fareIdGo : ++fareIdBack;
+    const uid = `fare${dir}_${id}`;
+    const list = document.getElementById('fareList' + dir);
+    const div = document.createElement('div');
+    div.className = 'fare-item';
+    div.id = uid;
+    div.innerHTML = `
+      <div class="fare-item-main">
+        <div class="fare-item-name">
+          <input type="text" placeholder="内容（例: 新幹線自由席、領収書分）" oninput="updateFareTotal('${dir}')">
+        </div>
+        <div class="fare-item-amount">
+          <div class="fare-item-amount-wrap">
+            <input type="number" placeholder="0" min="0" oninput="updateFareTotal('${dir}')">
+            <span class="unit">円</span>
+          </div>
+        </div>
+      </div>
+      <span class="fare-subtotal" id="${uid}_sub">—</span>
+      <button class="btn-remove-fare" onclick="removeFare('${uid}','${dir}')" title="削除">×</button>
+    `;
+    list.appendChild(div);
+    updateFareTotal(dir);
+  }
+  function addOtherNoFocus() {
+    const id = ++otherIdCount;
+    const uid = `other_${id}`;
+    const list = document.getElementById('otherList');
+    const div = document.createElement('div');
+    div.className = 'other-item';
+    div.id = uid;
+    div.innerHTML = `
+      <div class="other-item-main">
+        <div class="other-item-name">
+          <input type="text" placeholder="項目名（例: 駐車場代、バス代）" oninput="updateOtherTotal()">
+        </div>
+        <div class="other-item-amount">
+          <div class="other-item-amount-wrap">
+            <input type="number" placeholder="0" min="0" oninput="updateOtherTotal()">
+            <span class="unit">円</span>
+          </div>
+        </div>
+      </div>
+      <span></span>
+      <button class="btn-remove-other" onclick="removeOther('${uid}')" title="削除">×</button>
+    `;
+    list.appendChild(div);
+    updateOtherTotal();
+  }
+  addFareNoFocus('Go'); addFareNoFocus('Back');
+  addOtherNoFocus();
+  window.scrollTo(0, 0);
 </script>
 </body>
 </html>
