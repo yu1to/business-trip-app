@@ -377,7 +377,7 @@
         </div>
         <div class="rule-note" style="background:var(--green-light);border-left-color:var(--green);color:var(--navy-text);">
           <span class="rule-note-icon">💼</span>
-          <div><strong>稼働日</strong>：①〜④からその日のパターンを選ぶだけでOK（宿泊日当1,500円に加算）</div>
+          <div><strong>稼働日</strong>：3つの条件をそれぞれON/OFFで切り替えるだけ（宿泊日当1,500円に加算）。「通常勤務（7時間超）」はデフォルトでONになっています。半休などで7時間勤務していない日はタップしてOFFにしてください。</div>
         </div>
         <div id="dayTypeSummary" class="day-type-summary"></div>
         <div id="dayScheduleList"><p class="empty-note">出張期間を入力すると日程が表示されます</p></div>
@@ -560,7 +560,7 @@
     <div class="about-hero">
       <div class="about-icon">✈</div>
       <div class="about-app-name">出張費計算アプリ</div>
-      <div class="about-version-badge">Version 2.6.0</div>
+      <div class="about-version-badge">Version 2.7.0</div>
       <div class="about-tagline">出張の費用計算をかんたんに</div>
     </div>
 
@@ -600,6 +600,10 @@
       <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
       <div class="section-body">
         <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.7.0</div>
+            <div class="changelog-content"><div class="changelog-title">稼働日の条件加算日当をチェック式に変更</div><div class="changelog-desc">①〜④のパターン選択を廃止し、「通常勤務（7時間超）」「ホテル出発が7時前」「ホテル帰着が19時以降」の3条件を個別にON/OFFできる方式に変更。「7時間超」の条件が計算式から漏れていた不具合を修正し、デフォルトでONにすることで入力漏れを防止。半休などで7時間勤務していない日はタップしてOFFに切替可能</div></div>
+          </div>
           <div class="changelog-item">
             <div class="changelog-version">v2.6.0</div>
             <div class="changelog-content"><div class="changelog-title">「精算」タブを追加（家計簿アプリと連携）</div><div class="changelog-desc">家計簿アプリの「出張関係」カテゴリのバックアップ(.json)を読み込み、対象期間の実際の支出を自動集計。出張費計算の支給見込み額と突き合わせて、出張の損益（得した分・持ち出し分）を確認できるように</div></div>
@@ -790,15 +794,26 @@
     const count=[c1,c2,c3].filter(Boolean).length;
     return {bonus:count*bonusRate, count, duration:hours, eligible:true, cond:[c1,c2,c3], eval:true};
   }
-  function workBonusFromPattern(pattern, bonusRate){
-    const early = pattern==='early' || pattern==='both';
-    const late = pattern==='late' || pattern==='both';
-    const count = (early?1:0) + (late?1:0);
-    return {bonus:count*bonusRate, count, flags:{early,late}};
+  // 稼働日の条件加算日当（3条件を個別にON/OFF）
+  // full7h: 通常勤務（7時間超）※デフォルトON、half: 早朝出発、late: 深夜帰着
+  function getWorkFlags(state){
+    if (state && state.workFlags) return state.workFlags;
+    if (state && state.workPattern){ // 旧バージョン（v2.3〜2.6）のデータからの変換
+      const p = state.workPattern;
+      return {full7h:true, early:(p==='early'||p==='both'), late:(p==='late'||p==='both')};
+    }
+    return {full7h:true, early:false, late:false};
   }
-  function selectWorkPattern(ds, pattern){
+  function workBonusFromFlags(flags, bonusRate){
+    const f7=!!flags.full7h, early=!!flags.early, late=!!flags.late;
+    const count = (f7?1:0)+(early?1:0)+(late?1:0);
+    return {bonus:count*bonusRate, count, flags:{full7h:f7,early,late}};
+  }
+  function toggleWorkFlag(ds, flag){
     if(!dayState[ds]) dayState[ds]={};
-    dayState[ds].workPattern = pattern;
+    dayState[ds].workFlags = getWorkFlags(dayState[ds]);
+    delete dayState[ds].workPattern;
+    dayState[ds].workFlags[flag] = !dayState[ds].workFlags[flag];
     renderDaySchedule();
   }
 
@@ -872,7 +887,7 @@
   }
 
   // ===== 日程スケジュール（区分・時刻） =====
-  let dayState = {}; // { 'YYYY-MM-DD': {override:'work'|'off'|null, depTime, arrTime, hotelDep, hotelArr} }
+  let dayState = {}; // { 'YYYY-MM-DD': {override:'work'|'off'|null, depTime, arrTime, workFlags:{full7h,early,late}} }
 
   function classifyDays(days){
     const n = days.length;
@@ -924,20 +939,20 @@
       </div>`;
     }
     if (day.type==='work'){
-      const pattern = st.workPattern || 'none';
-      const opt = (key, num, label, amtLabel) => `<div class="pattern-option ${pattern===key?'selected':''}" onclick="selectWorkPattern('${day.ds}','${key}')">
-        <span class="pattern-num">${num}</span>
+      const flags = getWorkFlags(st);
+      const opt = (key, label, checked) => `<div class="pattern-option ${checked?'selected':''}" onclick="toggleWorkFlag('${day.ds}','${key}')">
+        <span class="pattern-num">${checked?'✅':'⬜'}</span>
         <span class="pattern-label">${label}</span>
-        <span class="pattern-amt">${amtLabel}</span>
+        <span class="pattern-amt">${checked?'+1,000円':'±0円'}</span>
       </div>`;
       return `<div class="day-card">
         <div class="day-card-head"><span class="day-badge badge-work">💼 稼働日</span><span class="day-date">${label}</span><button class="day-toggle" onclick="toggleDayType('${day.ds}','off')">→ 休日にする</button></div>
         <div class="pattern-list">
-          ${opt('none','①','通常勤務（早朝出発・深夜帰着なし）','±0円')}
-          ${opt('early','②','ホテル出発が7時前','+1,000円')}
-          ${opt('late','③','ホテル帰着が19時以降','+1,000円')}
-          ${opt('both','④','7時前出発 かつ 19時以降帰着','+2,000円')}
+          ${opt('full7h','通常勤務（所要7時間超）', flags.full7h)}
+          ${opt('early','ホテル出発が7時前', flags.early)}
+          ${opt('late','ホテル帰着が19時以降', flags.late)}
         </div>
+        <div class="day-hint">💡 半休などで所要7時間を超えない日は「通常勤務」をタップしてOFFにしてください。</div>
       </div>`;
     }
     if (day.type==='off'){
@@ -1146,7 +1161,7 @@
         const meal = bR+lR;
         rows.push({type:'return', ds:day.ds, lodging, meal, bonusInfo:tb});
       } else if (day.type==='work'){
-        const wb = workBonusFromPattern(state.workPattern || 'none', bonusRate);
+        const wb = workBonusFromFlags(getWorkFlags(state), bonusRate);
         const lodging = lodgingRate + wb.bonus;
         const meal = bR+lR+dR;
         rows.push({type:'work', ds:day.ds, lodging, meal, bonusInfo:wb});
