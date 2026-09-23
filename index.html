@@ -560,7 +560,7 @@
     <div class="about-hero">
       <div class="about-icon">✈</div>
       <div class="about-app-name">出張費計算アプリ</div>
-      <div class="about-version-badge">Version 2.7.0</div>
+      <div class="about-version-badge">Version 2.8.0</div>
       <div class="about-tagline">出張の費用計算をかんたんに</div>
     </div>
 
@@ -600,6 +600,10 @@
       <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
       <div class="section-body">
         <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.8.0</div>
+            <div class="changelog-content"><div class="changelog-title">履歴に損益を組み込み</div><div class="changelog-desc">「精算」タブで損益を計算すると、対象期間と一致する「履歴」の項目に支給見込み額・実際の支出・損益（得した分／持ち出し分）が自動で紐づき、履歴一覧でも一目で確認できるように</div></div>
+          </div>
           <div class="changelog-item">
             <div class="changelog-version">v2.7.0</div>
             <div class="changelog-content"><div class="changelog-title">稼働日の条件加算日当をチェック式に変更</div><div class="changelog-desc">①〜④のパターン選択を廃止し、「通常勤務（7時間超）」「ホテル出発が7時前」「ホテル帰着が19時以降」の3条件を個別にON/OFFできる方式に変更。「7時間超」の条件が計算式から漏れていた不具合を修正し、デフォルトでONにすることで入力漏れを防止。半休などで7時間勤務していない日はタップしてOFFに切替可能</div></div>
@@ -1401,6 +1405,20 @@
 
     card.classList.remove('show'); void card.offsetWidth; card.classList.add('show');
     setTimeout(() => card.scrollIntoView({behavior:'smooth', block:'nearest'}), 50);
+
+    // 対象期間と一致する履歴に損益を紐づけて保存
+    const matches = histories.filter(hh => hh.startDate===s && hh.endDate===e);
+    if (matches.length){
+      const settlementData = {
+        expected: Math.round(expected),
+        actual: Math.round(actual),
+        diff: Math.round(diff),
+        settledAt: new Date().toLocaleString('ja-JP')
+      };
+      matches.forEach(hh => { hh.settlement = settlementData; });
+      localStorage.setItem('bt_history_v6', JSON.stringify(histories));
+      renderHistory();
+    }
   }
 
   // ===== プリセット =====
@@ -1507,17 +1525,33 @@
     el.innerHTML = histories.map(h => {
       const period = `${h.startDate} 〜 ${h.endDate}`;
       const summary = `${h.totalDays}日間 / ${h.nights}泊${h.workDays?` / 稼働${h.workDays}日`:''}${h.offDays?` / 休日${h.offDays}日`:''}`;
+      const settle = h.settlement;
+      const settleBadge = settle ? `<div style="font-size:.7rem;font-weight:700;margin-top:2px;color:${settle.diff>=0?'var(--green)':'var(--red)'}">${settle.diff>=0?'+':'−'}¥${Math.abs(settle.diff).toLocaleString()}</div>` : '';
+      const settleDetail = settle ? `
+          <div class="history-detail-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:12px">
+            <span class="history-detail-name" style="font-weight:700;color:var(--navy-text)">📊 損益（${esc(settle.settledAt)}時点）</span><span></span>
+          </div>
+          <div class="history-detail-row"><span class="history-detail-name">支給見込み額</span><span class="history-detail-val">¥${settle.expected.toLocaleString()}</span></div>
+          <div class="history-detail-row"><span class="history-detail-name">実際の支出</span><span class="history-detail-val">¥${settle.actual.toLocaleString()}</span></div>
+          <div class="history-detail-row" style="border-bottom:none">
+            <span class="history-detail-name" style="font-weight:700">${settle.diff>=0?'得した分':'持ち出し分'}</span>
+            <span class="history-detail-val" style="color:${settle.diff>=0?'var(--green)':'var(--red)'}">${settle.diff>=0?'+':'−'}¥${Math.abs(settle.diff).toLocaleString()}</span>
+          </div>` : '';
       return `<div class="history-item">
         <div class="history-header" onclick="toggleHistoryDetail(${h.id})">
           <div class="history-meta">
             <div class="history-date">📅 ${esc(h.savedAt)}</div>
             <div class="history-period">${esc(period)}<span style="font-size:.72rem;color:var(--muted);margin-left:8px">${esc(summary)}</span></div>
           </div>
-          <div class="history-total">¥${Math.round(h.total).toLocaleString()}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end">
+            <div class="history-total">¥${Math.round(h.total).toLocaleString()}</div>
+            ${settleBadge}
+          </div>
           <div class="history-chevron" id="hchevron_${h.id}">▼</div>
         </div>
         <div class="history-detail" id="hdetail_${h.id}">
           ${h.breakdown.map(b => `<div class="history-detail-row"><span class="history-detail-name">${esc(b.name)}</span><span class="history-detail-val">¥${Math.round(b.value).toLocaleString()}</span></div>`).join('')}
+          ${settleDetail}
           <div class="history-actions">
             <button class="btn-reuse" onclick="reuseHistory(${h.id})">↩ この内容で再計算</button>
             <button class="btn-del-history" onclick="deleteHistory(${h.id})">削除</button>
