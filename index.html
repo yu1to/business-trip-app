@@ -336,6 +336,7 @@
   <button class="tab-btn active" onclick="switchTab('calc',this)">💼 費用計算</button>
   <button class="tab-btn" onclick="switchTab('preset',this)">⚙ プリセット管理</button>
   <button class="tab-btn" onclick="switchTab('history',this)">📋 履歴</button>
+  <button class="tab-btn" onclick="switchTab('settle',this)">📊 精算</button>
   <button class="tab-btn" onclick="switchTab('about',this)">ℹ️ このアプリ</button>
 </div>
 </div>
@@ -502,12 +503,64 @@
     </div>
   </div>
 
+  <!-- 精算タブ -->
+  <div class="tab-content" id="tab-settle">
+    <div class="section">
+      <div class="section-header"><div class="section-icon icon-purple">📊</div><div class="section-title">出張の損益を見る</div></div>
+      <div class="section-body">
+        <div class="rule-note" style="background:var(--blue-light);border-left-color:var(--blue);color:var(--navy-text);">
+          <span class="rule-note-icon">💡</span>
+          <div>「費用計算」で算出した<strong>支給見込み額</strong>と、家計簿アプリの<strong>「出張関係」カテゴリに記録された実際の支出</strong>を突き合わせて、この出張でどれくらい得（または持ち出し）になったかを確認できます。</div>
+        </div>
+
+        <div class="sub-label">① 対象期間</div>
+        <div class="row-2">
+          <div class="field"><label>出発日</label><input type="date" id="settleStart" oninput="onSettleDateChange()"></div>
+          <div class="field"><label>帰着日</label><input type="date" id="settleEnd" oninput="onSettleDateChange()"></div>
+        </div>
+        <button class="day-toggle" style="margin-bottom:14px" onclick="copyMainPeriodToSettle()">📋 「費用計算」タブの期間をコピー</button>
+
+        <hr class="divider">
+
+        <div class="sub-label">② 支給見込み額（出張費計算の結果）</div>
+        <div id="settleHistoryPicker"><p class="empty-note">期間を入力すると、一致する計算履歴があれば選べます</p></div>
+        <div class="field">
+          <label>支給見込み額</label>
+          <div class="input-wrap"><input type="number" id="settleExpected" class="calc-input" placeholder="0" min="0" readonly onclick="openCalc('settleExpected','支給見込み額')"><span class="unit">円</span></div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="sub-label">③ 実際の支出（家計簿「出張関係」より）</div>
+        <button class="btn-add-fare" onclick="document.getElementById('kakeboImportInput').click()">📥 家計簿のバックアップ（.json）を読み込む</button>
+        <input type="file" id="kakeboImportInput" accept="application/json" style="display:none" onchange="importKakeboBackup(this.files[0])">
+        <div class="day-hint" style="margin:6px 0 10px">💡 家計簿アプリの「設定 → データ管理 → バックアップを保存」で書き出したJSONファイルを選んでください。「出張関係」カテゴリのうち、上で指定した期間内の支出だけを自動で拾います。</div>
+        <div id="settleActualList" style="margin-bottom:10px"><p class="empty-note">バックアップを読み込むと、期間内の「出張関係」支出が一覧表示されます</p></div>
+        <div class="field">
+          <label>実際の支出 合計（手動修正可）</label>
+          <div class="input-wrap"><input type="number" id="settleActual" class="calc-input" placeholder="0" min="0" readonly onclick="openCalc('settleActual','実際の支出 合計')"><span class="unit">円</span></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculateSettlement()">損益を計算する →</button>
+
+    <div class="result-section" id="settleResultCard">
+      <div class="result-top">
+        <div class="result-label" id="settleResultLabel">出張の損益</div>
+        <div class="result-amount"><span id="settleResultSign">¥</span><span id="settleResultAmount">0</span></div>
+        <div class="result-meta" id="settleResultMeta"></div>
+      </div>
+      <div class="result-body" id="settleBreakdown"></div>
+    </div>
+  </div>
+
   <!-- アバウトタブ -->
   <div class="tab-content" id="tab-about">
     <div class="about-hero">
       <div class="about-icon">✈</div>
       <div class="about-app-name">出張費計算アプリ</div>
-      <div class="about-version-badge">Version 2.4.0</div>
+      <div class="about-version-badge">Version 2.6.0</div>
       <div class="about-tagline">出張の費用計算をかんたんに</div>
     </div>
 
@@ -535,6 +588,7 @@
           <div class="feature-item"><span class="feature-icon">🧮</span><div class="feature-text"><div class="feature-name">全項目 電卓入力</div><div class="feature-desc">金額欄はすべてタップで電卓が開き、足し算しながら入力可能</div></div></div>
           <div class="feature-item"><span class="feature-icon">⚡</span><div class="feature-text"><div class="feature-name">プリセット機能</div><div class="feature-desc">よく使う単価を登録してワンタップ適用</div></div></div>
           <div class="feature-item"><span class="feature-icon">📋</span><div class="feature-text"><div class="feature-name">履歴保存</div><div class="feature-desc">計算結果を自動保存・再利用可能</div></div></div>
+          <div class="feature-item"><span class="feature-icon">📊</span><div class="feature-text"><div class="feature-name">家計簿アプリと連携した出張損益の可視化</div><div class="feature-desc">家計簿アプリの「出張関係」カテゴリの実支出データを読み込み、支給見込み額との差額（得・損）を自動計算</div></div></div>
           <div class="feature-item"><span class="feature-icon">📤</span><div class="feature-text"><div class="feature-name">データのエクスポート／インポート</div><div class="feature-desc">プリセット・履歴をファイルに書き出し、他端末で読み込み可能</div></div></div>
           <div class="feature-item"><span class="feature-icon">🌓</span><div class="feature-text"><div class="feature-name">ライト／ダークモード切替</div><div class="feature-desc">端末の設定に加えて、アプリ内でも手動切替が可能</div></div></div>
           <div class="feature-item"><span class="feature-icon">🔒</span><div class="feature-text"><div class="feature-name">プライバシー保護</div><div class="feature-desc">データはすべてお使いの端末内にのみ保存</div></div></div>
@@ -546,6 +600,10 @@
       <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
       <div class="section-body">
         <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.6.0</div>
+            <div class="changelog-content"><div class="changelog-title">「精算」タブを追加（家計簿アプリと連携）</div><div class="changelog-desc">家計簿アプリの「出張関係」カテゴリのバックアップ(.json)を読み込み、対象期間の実際の支出を自動集計。出張費計算の支給見込み額と突き合わせて、出張の損益（得した分・持ち出し分）を確認できるように</div></div>
+          </div>
           <div class="changelog-item">
             <div class="changelog-version">v2.5.0</div>
             <div class="changelog-content"><div class="changelog-title">上部バーを画面に固定</div><div class="changelog-desc">ヘッダー・タブ切替バーを画面上部に固定し、下の入力エリアだけがスクロールするように変更</div></div>
@@ -949,6 +1007,10 @@
     document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
     document.getElementById('tab-'+tab).classList.add('active'); btn.classList.add('active');
     if (tab==='calc') renderPresetApply();
+    if (tab==='settle'){
+      renderSettleHistoryPicker(document.getElementById('settleStart').value, document.getElementById('settleEnd').value);
+      renderSettleActualList();
+    }
     window.scrollTo({top:0, behavior:'auto'});
     updateHeaderCollapse();
   }
@@ -1202,6 +1264,128 @@
       }
     });
     renderHistory();
+  }
+
+  // ===== 出張精算（家計簿アプリの「出張関係」実支出との突き合わせ） =====
+  let kakeboImportedTx = null; // { txs:[...], catNames:'出張関係' }
+
+  function copyMainPeriodToSettle(){
+    const s = document.getElementById('startDate').value, e = document.getElementById('endDate').value;
+    if (!s || !e){ alert('「費用計算」タブで出張期間を入力してください'); return; }
+    document.getElementById('settleStart').value = s;
+    document.getElementById('settleEnd').value = e;
+    onSettleDateChange();
+  }
+
+  function onSettleDateChange(){
+    const s = document.getElementById('settleStart').value, e = document.getElementById('settleEnd').value;
+    renderSettleHistoryPicker(s, e);
+    renderSettleActualList();
+  }
+
+  function renderSettleHistoryPicker(s, e){
+    const wrap = document.getElementById('settleHistoryPicker');
+    if (!wrap) return;
+    if (!s || !e){ wrap.innerHTML = '<p class="empty-note">期間を入力すると、一致する計算履歴があれば選べます</p>'; return; }
+    const matches = histories.filter(h => h.startDate===s && h.endDate===e);
+    if (!matches.length){
+      wrap.innerHTML = '<p class="empty-note">一致する計算履歴が見つかりません。下の欄に支給見込み額を直接入力してください</p>';
+      return;
+    }
+    wrap.innerHTML = matches.map(h => `<div class="preset-card" style="cursor:pointer" onclick="applySettleHistory(${h.id})">
+      <div style="flex:1;min-width:0">
+        <div class="preset-card-name">📅 ${esc(h.savedAt)}</div>
+        <div class="preset-tags"><span class="ptag ptag-blue">${h.totalDays}日間・${h.nights}泊</span></div>
+      </div>
+      <div style="font-family:var(--mono);font-weight:700;color:var(--blue);white-space:nowrap;padding-left:8px">¥${Math.round(h.total).toLocaleString()}</div>
+    </div>`).join('');
+  }
+  function applySettleHistory(id){
+    const h = histories.find(x => x.id===id);
+    if (!h) return;
+    document.getElementById('settleExpected').value = Math.round(h.total);
+  }
+
+  function importKakeboBackup(file){
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const data = JSON.parse(e.target.result);
+        if (!data || !Array.isArray(data.transactions) || !Array.isArray(data.categories)) {
+          alert('家計簿アプリのバックアップファイル（JSON）ではないようです。'); return;
+        }
+        let tripCats = data.categories.filter(c => c.type==='expense' && c.name==='出張関係');
+        if (!tripCats.length) tripCats = data.categories.filter(c => c.type==='expense' && /出張/.test(c.name||''));
+        if (!tripCats.length){
+          alert('「出張関係」カテゴリが見つかりませんでした。家計簿アプリ側のカテゴリ名をご確認ください。'); return;
+        }
+        const catIds = new Set(tripCats.map(c => c.id));
+        const txs = data.transactions.filter(t => t.type==='expense' && catIds.has(t.catId));
+        kakeboImportedTx = { txs, catNames: tripCats.map(c => c.name).join('・') };
+        renderSettleActualList();
+      }catch(err){
+        alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+      }
+      document.getElementById('kakeboImportInput').value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function renderSettleActualList(){
+    const wrap = document.getElementById('settleActualList');
+    if (!wrap) return;
+    const s = document.getElementById('settleStart').value, e = document.getElementById('settleEnd').value;
+    if (!kakeboImportedTx){ wrap.innerHTML = '<p class="empty-note">バックアップを読み込むと、期間内の「出張関係」支出が一覧表示されます</p>'; return; }
+    if (!s || !e){ wrap.innerHTML = '<p class="empty-note">先に対象期間（出発日・帰着日）を入力してください</p>'; return; }
+    const inRange = kakeboImportedTx.txs.filter(t => t.date>=s && t.date<=e).sort((a,b)=>a.date.localeCompare(b.date));
+    if (!inRange.length){
+      wrap.innerHTML = `<p class="empty-note">期間内に「${esc(kakeboImportedTx.catNames)}」の支出が見つかりませんでした</p>`;
+      document.getElementById('settleActual').value = 0;
+      return;
+    }
+    const total = inRange.reduce((sum,t) => sum + (t.amount||0), 0);
+    wrap.innerHTML = `<div class="fare-list">` + inRange.map(t => `
+      <div class="fare-item" style="grid-template-columns:1fr auto">
+        <div class="fare-item-main"><div style="font-size:.82rem;color:var(--navy-text)">${esc(t.date)}　${esc(t.memo || kakeboImportedTx.catNames)}</div></div>
+        <span class="fare-subtotal has-val">¥${Math.round(t.amount).toLocaleString()}</span>
+      </div>`).join('') + `</div>
+      <div class="fare-total-row"><span class="fare-total-label">期間内 小計（${inRange.length}件）</span><span class="fare-total-value">¥${Math.round(total).toLocaleString()}</span></div>`;
+    document.getElementById('settleActual').value = Math.round(total);
+  }
+
+  function calculateSettlement(){
+    const s = document.getElementById('settleStart').value, e = document.getElementById('settleEnd').value;
+    if (!s || !e){ alert('対象期間（出発日・帰着日）を入力してください'); return; }
+    const expected = parseFloat(document.getElementById('settleExpected').value) || 0;
+    const actual = parseFloat(document.getElementById('settleActual').value) || 0;
+    const diff = expected - actual;
+
+    const card = document.getElementById('settleResultCard');
+    const amountWrap = card.querySelector('.result-amount');
+    const labelEl = document.getElementById('settleResultLabel');
+    const signEl = document.getElementById('settleResultSign');
+    const amountEl = document.getElementById('settleResultAmount');
+
+    amountEl.textContent = Math.abs(Math.round(diff)).toLocaleString();
+    if (diff >= 0){
+      labelEl.textContent = 'この出張のプラス分（浮いた金額）';
+      amountWrap.style.color = 'var(--yellow)';
+      signEl.textContent = '+¥';
+    } else {
+      labelEl.textContent = 'この出張の持ち出し（足が出た金額）';
+      amountWrap.style.color = '#ff6b6b';
+      signEl.textContent = '−¥';
+    }
+    document.getElementById('settleResultMeta').innerHTML = `
+      <div class="result-meta-item"><strong>¥${Math.round(expected).toLocaleString()}</strong>支給見込み</div>
+      <div class="result-meta-item"><strong>¥${Math.round(actual).toLocaleString()}</strong>実際の支出</div>`;
+    document.getElementById('settleBreakdown').innerHTML =
+      bdRow('#ffc233','支給見込み額','出張費計算の結果', expected) +
+      bdRow('#ff4d6a','実際の支出','家計簿「出張関係」より', actual);
+
+    card.classList.remove('show'); void card.offsetWidth; card.classList.add('show');
+    setTimeout(() => card.scrollIntoView({behavior:'smooth', block:'nearest'}), 50);
   }
 
   // ===== プリセット =====
