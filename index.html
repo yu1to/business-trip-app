@@ -2,8 +2,16 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>出張費計算アプリ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#1a2240">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="出張費計算">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -19,8 +27,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
 
-  .app-header{background:var(--navy);padding:20px 24px 24px;position:relative;overflow:hidden;padding-top:calc(20px + env(safe-area-inset-top,0px))}
-  .app-header::before{content:'✈';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:5rem;opacity:.07}
+  .app-header{background:var(--navy);padding:18px 20px 22px;position:relative;padding-top:calc(18px + env(safe-area-inset-top,0px))}
   .app-header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:1}
   .app-header h1{font-size:1.3rem;font-weight:900;color:#fff;letter-spacing:.06em}
   .app-header p{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.08em}
@@ -52,7 +59,7 @@
   input[type=date],input[type=number],input[type=text],input[type=time]{
     width:100%;border:1.5px solid var(--border);border-radius:10px;
     background:var(--bg);color:var(--text);font-family:var(--sans);
-    font-size:.92rem;font-weight:500;padding:10px 14px;outline:none;
+    font-size:16px;font-weight:500;padding:10px 14px;outline:none;
     transition:border-color .15s,background .15s;-webkit-appearance:none
   }
   input[type=number]{padding-right:42px}
@@ -78,11 +85,11 @@
   .cal-legend{display:flex;align-items:center;gap:4px}
   .cal-dot{width:8px;height:8px;border-radius:3px}
 
-  .rule-note{display:flex;align-items:flex-start;gap:8px;background:#fff8e6;border:1px solid #ffe08a;border-radius:10px;padding:10px 12px;font-size:.76rem;color:#7a5c00;margin-bottom:12px;line-height:1.6}
-  .rule-note-icon{font-size:.9rem;flex-shrink:0;margin-top:1px}
+  .rule-note{display:flex;align-items:flex-start;gap:9px;background:var(--yellow-light);border-radius:12px;border-left:3px solid var(--yellow);padding:11px 13px;font-size:.76rem;color:var(--navy-text);margin-bottom:12px;line-height:1.65}
+  .rule-note-icon{font-size:.9rem;flex-shrink:0;margin-top:1px;opacity:.8}
   .rule-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.72rem}
-  .rule-table th,.rule-table td{border:1px solid #ffe08a;padding:5px 7px;text-align:left}
-  .rule-table th{background:#fff3cc}
+  .rule-table th,.rule-table td{border:1px solid rgba(0,0,0,.06);padding:5px 7px;text-align:left}
+  .rule-table th{background:rgba(0,0,0,.04);font-weight:700}
 
   .divider{border:none;border-top:1px solid var(--border);margin:14px 0}
   .sub-label{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;margin-top:2px}
@@ -256,20 +263,25 @@
   .btn-del:hover{background:var(--red-light)}
 
   /* 電卓モーダル */
-  .calc-modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,34,64,.5);z-index:2000;align-items:flex-end;justify-content:center}
+  .calc-modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,12,24,.55);z-index:2000;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
   .calc-modal-overlay.show{display:flex}
-  .calc-sheet{background:var(--white);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:var(--shadow-lg);animation:fadeIn .2s ease}
-  .calc-sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .calc-sheet-title{font-size:.9rem;font-weight:700;color:var(--navy-text)}
-  .calc-sheet-close{background:var(--bg);border:none;border-radius:50%;width:28px;height:28px;font-size:1rem;color:var(--muted);cursor:pointer}
-  .calc-expr-display{font-size:.78rem;color:var(--muted);text-align:right;min-height:18px;font-family:var(--mono);margin-bottom:2px;word-break:break-all}
-  .calc-main-display{font-size:2.2rem;font-weight:700;color:var(--navy-text);text-align:right;font-family:var(--mono);margin-bottom:14px;word-break:break-all}
-  .hc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .hc-btn{padding:0;height:52px;border:none;border-radius:12px;font-size:1.25rem;font-weight:600;font-family:var(--sans);cursor:pointer;background:var(--bg);color:var(--navy-text);transition:all .1s}
-  .hc-btn:active{opacity:.7;transform:scale(.96)}
-  .hc-op{background:var(--blue-light);color:var(--blue)}
-  .hc-eq{background:var(--blue);color:#fff}
-  .hc-del{background:var(--red-light);color:var(--red)}
+  .calc-sheet{background:var(--white);width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:var(--shadow-lg);animation:fadeIn .2s ease}
+  .calc-sheet::before{content:'';display:block;width:36px;height:4px;border-radius:4px;background:var(--border);margin:0 auto 14px}
+  .calc-sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+  .calc-sheet-id{display:flex;align-items:center;gap:8px;min-width:0}
+  .calc-sheet-icon{width:32px;height:32px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0}
+  .calc-sheet-title{font-size:.82rem;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .calc-sheet-amount-wrap{display:flex;align-items:baseline;gap:8px;flex-shrink:0}
+  .calc-main-display{font-size:1.6rem;font-weight:800;color:var(--navy-text);font-family:var(--mono);word-break:break-all}
+  .calc-main-unit{font-size:.82rem;color:var(--muted);font-weight:700}
+  .calc-sheet-close{background:var(--bg);border:none;border-radius:50%;width:30px;height:30px;font-size:1rem;color:var(--muted);cursor:pointer;flex-shrink:0;margin-left:2px}
+  .calc-expr-display{background:var(--bg);border-radius:14px;padding:0 16px;min-height:42px;display:flex;align-items:center;justify-content:flex-end;font-size:.85rem;color:var(--muted);font-family:var(--mono);margin-bottom:14px;word-break:break-all}
+  .hc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .hc-btn{padding:0;height:56px;border:none;border-radius:16px;font-size:1.3rem;font-weight:700;font-family:var(--sans);cursor:pointer;background:var(--bg);color:var(--navy-text);transition:all .1s}
+  .hc-btn:active{opacity:.7;transform:scale(.95)}
+  .hc-op{background:#ff9f0a;color:#fff}
+  .hc-eq{background:var(--blue);color:#fff;font-size:1.05rem;font-weight:800;letter-spacing:.04em}
+  .hc-del{background:var(--red-light);color:var(--red);font-size:1.15rem}
   .hc-wide{grid-column:span 2}
 
   #importFileInput{display:none}
@@ -339,7 +351,7 @@
             </table>
           </div>
         </div>
-        <div class="rule-note" style="background:#e0f8ef;border-color:#7ddfc0;color:#005a3a;">
+        <div class="rule-note" style="background:var(--green-light);border-left-color:var(--green);color:var(--navy-text);">
           <span class="rule-note-icon">💼</span>
           <div><strong>稼働日</strong>：①〜④からその日のパターンを選ぶだけでOK（宿泊日当1,500円に加算）</div>
         </div>
@@ -361,7 +373,7 @@
       <div class="section-body">
 
         <div class="sub-label">💰 基本単価設定</div>
-        <div class="rule-note" style="background:var(--blue-light);border-color:#b9cdfc;color:var(--blue);">
+        <div class="rule-note" style="background:var(--blue-light);border-left-color:var(--blue);color:var(--navy-text);">
           <span class="rule-note-icon">🧾</span>
           <div>宿泊費は<strong>実費精算</strong>です。出張中にかかったホテル代の<strong>合計</strong>を1つ入力してください（日ごとに分けて入力する必要はありません）。タップすると電卓でレシートの金額を足し算しながら合計できます。</div>
         </div>
@@ -573,11 +585,16 @@
 <div class="calc-modal-overlay" id="modal-hotel-calc">
   <div class="calc-sheet">
     <div class="calc-sheet-head">
-      <span class="calc-sheet-title">🧮 <span id="calcSheetTitle">電卓</span></span>
-      <button class="calc-sheet-close" onclick="closeCalc()">×</button>
+      <div class="calc-sheet-id">
+        <div class="calc-sheet-icon" id="calcSheetIcon">🧮</div>
+        <span class="calc-sheet-title" id="calcSheetTitle">電卓</span>
+      </div>
+      <div class="calc-sheet-amount-wrap">
+        <span class="calc-main-display" id="hotelCalcMainDisplay">0</span><span class="calc-main-unit">円</span>
+        <button class="calc-sheet-close" onclick="closeCalc()">×</button>
+      </div>
     </div>
-    <div class="calc-expr-display" id="hotelCalcExprDisplay"></div>
-    <div class="calc-main-display" id="hotelCalcMainDisplay">0</div>
+    <div class="calc-expr-display" id="hotelCalcExprDisplay">&nbsp;</div>
     <div class="hc-grid">
       <button class="hc-btn" onclick="hcInput('7')">7</button>
       <button class="hc-btn" onclick="hcInput('8')">8</button>
@@ -595,9 +612,9 @@
       <button class="hc-btn" onclick="hcInput('.')">.</button>
       <button class="hc-btn hc-op" onclick="hcInput('+')">＋</button>
     </div>
-    <div class="hc-grid" style="margin-top:8px">
+    <div class="hc-grid" style="margin-top:10px">
       <button class="hc-btn hc-del" onclick="hcDel()">⌫</button>
-      <button class="hc-btn hc-eq" style="grid-column:span 3" onclick="hcEquals()">= 入力する</button>
+      <button class="hc-btn hc-eq" style="grid-column:span 3" onclick="hcEquals()">入力する</button>
     </div>
   </div>
 </div>
@@ -673,9 +690,19 @@
   // ===== 汎用 電卓モーダル =====
   let hcExpr = '';
   let calcTargetId = null;
+  function iconForCalcTitle(title){
+    if(/宿泊/.test(title)) return '🏨';
+    if(/朝食|昼食|夕食|食費|食/.test(title)) return '🍽';
+    if(/日当/.test(title)) return '💴';
+    if(/ガソリン|燃費|距離/.test(title)) return '⛽';
+    if(/交通/.test(title)) return '🚃';
+    if(/その他/.test(title)) return '📋';
+    return '🧮';
+  }
   function openCalc(targetId, title){
     calcTargetId = targetId;
     document.getElementById('calcSheetTitle').textContent = title || '電卓';
+    document.getElementById('calcSheetIcon').textContent = iconForCalcTitle(title||'');
     hcExpr = '';
     updateHcDisplay();
     document.getElementById('modal-hotel-calc').classList.add('show');
@@ -709,7 +736,7 @@
     const exprEl = document.getElementById('hotelCalcExprDisplay');
     const mainEl = document.getElementById('hotelCalcMainDisplay');
     if (!hasOp){
-      exprEl.textContent = '';
+      exprEl.innerHTML = '&nbsp;';
       mainEl.textContent = hcExpr===''? '0' : hcExpr;
     } else {
       const result = hcEval();
@@ -1309,6 +1336,11 @@
 
   // ===== 初期化 =====
   if (history.scrollRestoration) history.scrollRestoration = "manual";
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    });
+  }
   applyTheme(localStorage.getItem('bt_theme_v1') || 'auto');
   document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
   renderPresets(); renderPresetApply(); renderHistory();
