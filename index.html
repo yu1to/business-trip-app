@@ -1348,8 +1348,8 @@
         kakeboImportedTx = { txs, catNames: tripCats.map(c => c.name).join('・') };
         renderSettleActualList();
         // 対象期間が入力済みなら、インポートのたびに自動で損益計算・履歴反映まで行う
-        const s = document.getElementById('settleStart').value, e = document.getElementById('settleEnd').value;
-        if (s && e) calculateSettlement();
+        const settleS = document.getElementById('settleStart').value, settleE = document.getElementById('settleEnd').value;
+        if (settleS && settleE) calculateSettlement();
       }catch(err){
         alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
       }
