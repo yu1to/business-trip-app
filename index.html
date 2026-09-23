@@ -258,6 +258,23 @@
   .btn-del{padding:6px 12px;background:none;border:1.5px solid #ffd0d5;color:var(--red);border-radius:8px;font-family:var(--sans);font-size:.75rem;font-weight:700;cursor:pointer;flex-shrink:0}
   .btn-del:hover{background:var(--red-light)}
 
+  /* 電卓モーダル */
+  .calc-modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,34,64,.5);z-index:2000;align-items:flex-end;justify-content:center}
+  .calc-modal-overlay.show{display:flex}
+  .calc-sheet{background:var(--white);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:var(--shadow-lg);animation:fadeIn .2s ease}
+  .calc-sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .calc-sheet-title{font-size:.9rem;font-weight:700;color:var(--navy)}
+  .calc-sheet-close{background:var(--bg);border:none;border-radius:50%;width:28px;height:28px;font-size:1rem;color:var(--muted);cursor:pointer}
+  .calc-expr-display{font-size:.78rem;color:var(--muted);text-align:right;min-height:18px;font-family:var(--mono);margin-bottom:2px;word-break:break-all}
+  .calc-main-display{font-size:2.2rem;font-weight:700;color:var(--navy);text-align:right;font-family:var(--mono);margin-bottom:14px;word-break:break-all}
+  .hc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .hc-btn{padding:0;height:52px;border:none;border-radius:12px;font-size:1.25rem;font-weight:600;font-family:var(--sans);cursor:pointer;background:var(--bg);color:var(--navy);transition:all .1s}
+  .hc-btn:active{opacity:.7;transform:scale(.96)}
+  .hc-op{background:var(--blue-light);color:var(--blue)}
+  .hc-eq{background:var(--blue);color:#fff}
+  .hc-del{background:var(--red-light);color:var(--red)}
+  .hc-wide{grid-column:span 2}
+
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#14182a;--white:#1f2540;--navy:#0e1122;--navy2:#1a2038;
@@ -342,7 +359,14 @@
         <div class="sub-label">💰 基本単価設定</div>
         <div class="rule-note" style="background:var(--blue-light);border-color:#b9cdfc;color:var(--blue);">
           <span class="rule-note-icon">🧾</span>
-          <div>宿泊費は<strong>実費精算</strong>のため単価はありません。「日程スケジュール」の各泊の欄に、実際にかかった金額（領収書の金額）をそれぞれ入力してください。</div>
+          <div>宿泊費は<strong>実費精算</strong>です。出張中にかかったホテル代の<strong>合計</strong>を1つ入力してください（日ごとに分けて入力する必要はありません）。🧮ボタンでレシートの金額を足し算しながら合計できます。</div>
+        </div>
+        <div class="field">
+          <label>宿泊費 合計（実費）</label>
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <div class="input-wrap" style="flex:1"><input type="number" id="hotelTotalCost" placeholder="0" min="0"><span class="unit">円</span></div>
+            <button type="button" onclick="openHotelCalc()" title="電卓で合計を計算" style="flex-shrink:0;width:44px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:1.15rem;cursor:pointer;color:var(--navy)">🧮</button>
+          </div>
         </div>
         <div class="field" style="max-width:60%"><label>宿泊日当（移動日・稼働日）</label><div class="input-wrap"><input type="number" id="lodgingAllowance" value="1500" min="0"><span class="unit">円</span></div></div>
         <div class="row-3">
@@ -480,7 +504,7 @@
     <div class="about-hero">
       <div class="about-icon">✈</div>
       <div class="about-app-name">出張費計算アプリ</div>
-      <div class="about-version-badge">Version 2.1.0</div>
+      <div class="about-version-badge">Version 2.2.0</div>
       <div class="about-tagline">出張の費用計算をかんたんに</div>
     </div>
 
@@ -517,6 +541,10 @@
       <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
       <div class="section-body">
         <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.2.0</div>
+            <div class="changelog-content"><div class="changelog-title">宿泊費を出張全体の合計1本に簡略化</div><div class="changelog-desc">日ごとの入力を廃止し、合計金額を1箇所に入力する方式に変更。電卓機能でレシートの金額を足し算しながら合計可能に</div></div>
+          </div>
           <div class="changelog-item">
             <div class="changelog-version">v2.1.0</div>
             <div class="changelog-content"><div class="changelog-title">宿泊費を実費精算方式に変更</div><div class="changelog-desc">宿泊費の単価入力を廃止し、日程スケジュールの各泊ごとに実費（領収書の金額）を入力する方式に対応</div></div>
@@ -556,6 +584,38 @@
     </div>
 
     <div class="about-footer">Made with ☕ by yuito</div>
+  </div>
+</div>
+
+<div class="calc-modal-overlay" id="modal-hotel-calc">
+  <div class="calc-sheet">
+    <div class="calc-sheet-head">
+      <span class="calc-sheet-title">🧮 宿泊費 電卓</span>
+      <button class="calc-sheet-close" onclick="closeHotelCalc()">×</button>
+    </div>
+    <div class="calc-expr-display" id="hotelCalcExprDisplay"></div>
+    <div class="calc-main-display" id="hotelCalcMainDisplay">0</div>
+    <div class="hc-grid">
+      <button class="hc-btn" onclick="hcInput('7')">7</button>
+      <button class="hc-btn" onclick="hcInput('8')">8</button>
+      <button class="hc-btn" onclick="hcInput('9')">9</button>
+      <button class="hc-btn hc-op" onclick="hcInput('÷')">÷</button>
+      <button class="hc-btn" onclick="hcInput('4')">4</button>
+      <button class="hc-btn" onclick="hcInput('5')">5</button>
+      <button class="hc-btn" onclick="hcInput('6')">6</button>
+      <button class="hc-btn hc-op" onclick="hcInput('×')">×</button>
+      <button class="hc-btn" onclick="hcInput('1')">1</button>
+      <button class="hc-btn" onclick="hcInput('2')">2</button>
+      <button class="hc-btn" onclick="hcInput('3')">3</button>
+      <button class="hc-btn hc-op" onclick="hcInput('−')">−</button>
+      <button class="hc-btn hc-wide" onclick="hcInput('0')">0</button>
+      <button class="hc-btn" onclick="hcInput('.')">.</button>
+      <button class="hc-btn hc-op" onclick="hcInput('+')">＋</button>
+    </div>
+    <div class="hc-grid" style="margin-top:8px">
+      <button class="hc-btn hc-del" onclick="hcDel()">⌫</button>
+      <button class="hc-btn hc-eq" style="grid-column:span 3" onclick="hcEquals()">= 合計を入力</button>
+    </div>
   </div>
 </div>
 
@@ -605,6 +665,57 @@
     return {bonus,count,flags};
   }
 
+  // ===== 宿泊費 電卓 =====
+  let hcExpr = '';
+  function openHotelCalc(){
+    hcExpr = '';
+    updateHcDisplay();
+    document.getElementById('modal-hotel-calc').classList.add('show');
+  }
+  function closeHotelCalc(){ document.getElementById('modal-hotel-calc').classList.remove('show'); }
+  function hcInput(val){
+    const OPS=['+','−','×','÷'];
+    const last = hcExpr.slice(-1);
+    if (OPS.includes(val) && (OPS.includes(last) || hcExpr==='')) return;
+    if (val==='.'){ const segs=hcExpr.split(/[+−×÷]/); if (segs[segs.length-1].includes('.')) return; }
+    hcExpr += val;
+    updateHcDisplay();
+  }
+  function hcDel(){ hcExpr = hcExpr.slice(0,-1); updateHcDisplay(); }
+  function hcEval(){
+    if (!hcExpr) return null;
+    try{
+      const expr = hcExpr.replace(/÷/g,'/').replace(/×/g,'*').replace(/−/g,'-');
+      if (!/^[\d+\-*/.]+$/.test(expr)) return null;
+      const clean = expr.replace(/[+\-*/]$/,'');
+      if (!clean) return null;
+      const result = Function('"use strict"; return ('+clean+')')();
+      if (!isFinite(result) || isNaN(result)) return null;
+      return Math.round(result*100)/100;
+    }catch(e){ return null; }
+  }
+  function updateHcDisplay(){
+    const OPS=['+','−','×','÷'];
+    const hasOp = OPS.some(op=>hcExpr.includes(op));
+    const exprEl = document.getElementById('hotelCalcExprDisplay');
+    const mainEl = document.getElementById('hotelCalcMainDisplay');
+    if (!hasOp){
+      exprEl.textContent = '';
+      mainEl.textContent = hcExpr===''? '0' : hcExpr;
+    } else {
+      const result = hcEval();
+      exprEl.textContent = hcExpr;
+      mainEl.textContent = result!==null ? result.toLocaleString() : hcExpr;
+    }
+  }
+  function hcEquals(){
+    const result = hcEval();
+    if (result!==null && result>=0){
+      document.getElementById('hotelTotalCost').value = result;
+      closeHotelCalc();
+    }
+  }
+
   // ===== 日程スケジュール（区分・時刻） =====
   let dayState = {}; // { 'YYYY-MM-DD': {override:'work'|'off'|null, depTime, arrTime, hotelDep, hotelArr} }
 
@@ -644,9 +755,8 @@
         <div class="day-card-head"><span class="day-badge badge-move">🚀 移動日</span><span class="day-date">${label}</span></div>
         <div class="row-2">
           <div class="field"><label>出発時刻（自宅/会社）</label><input type="time" data-date="${day.ds}" data-field="depTime" value="${esc(st.depTime||'')}" oninput="updateDayState(this)"></div>
-          <div class="field"><label>到着時刻（目的地）</label><input type="time" data-date="${day.ds}" data-field="arrTime" value="${esc(st.arrTime||'')}" oninput="updateDayState(this)"></div>
+          <div class="field" style="margin-bottom:0"><label>到着時刻（目的地）</label><input type="time" data-date="${day.ds}" data-field="arrTime" value="${esc(st.arrTime||'')}" oninput="updateDayState(this)"></div>
         </div>
-        <div class="field" style="margin-bottom:0"><label>宿泊費（実費・領収書の金額）</label><div class="input-wrap"><input type="number" data-date="${day.ds}" data-field="hotelCost" value="${esc(st.hotelCost||'')}" min="0" placeholder="8,000" oninput="updateDayState(this)"><span class="unit">円</span></div></div>
       </div>`;
     }
     if (day.type==='return'){
@@ -663,16 +773,14 @@
         <div class="day-card-head"><span class="day-badge badge-work">💼 稼働日</span><span class="day-date">${label}</span><button class="day-toggle" onclick="toggleDayType('${day.ds}','off')">→ 休日にする</button></div>
         <div class="row-2">
           <div class="field"><label>ホテル出発時刻</label><input type="time" data-date="${day.ds}" data-field="hotelDep" value="${esc(st.hotelDep||'')}" oninput="updateDayState(this)"></div>
-          <div class="field"><label>ホテル帰着時刻</label><input type="time" data-date="${day.ds}" data-field="hotelArr" value="${esc(st.hotelArr||'')}" oninput="updateDayState(this)"></div>
+          <div class="field" style="margin-bottom:0"><label>ホテル帰着時刻</label><input type="time" data-date="${day.ds}" data-field="hotelArr" value="${esc(st.hotelArr||'')}" oninput="updateDayState(this)"></div>
         </div>
-        <div class="field" style="margin-bottom:0"><label>宿泊費（実費・領収書の金額）</label><div class="input-wrap"><input type="number" data-date="${day.ds}" data-field="hotelCost" value="${esc(st.hotelCost||'')}" min="0" placeholder="8,000" oninput="updateDayState(this)"><span class="unit">円</span></div></div>
       </div>`;
     }
     if (day.type==='off'){
       return `<div class="day-card">
         <div class="day-card-head"><span class="day-badge badge-off">🌙 休日</span><span class="day-date">${label}</span><button class="day-toggle" onclick="toggleDayType('${day.ds}','work')">→ 稼働日にする</button></div>
-        <div class="day-off-note">宿泊費（実費）のみ計上されます（日当・食事補助なし）</div>
-        <div class="field" style="margin-bottom:0;margin-top:8px"><label>宿泊費（実費・領収書の金額）</label><div class="input-wrap"><input type="number" data-date="${day.ds}" data-field="hotelCost" value="${esc(st.hotelCost||'')}" min="0" placeholder="8,000" oninput="updateDayState(this)"><span class="unit">円</span></div></div>
+        <div class="day-off-note">日当・食事補助はありません（宿泊費は下の合計欄でまとめて計上されます）</div>
       </div>`;
     }
     // single (日帰り)
@@ -879,33 +987,32 @@
 
     classified.forEach((day)=>{
       const state = dayState[day.ds] || {};
-      const hotelCost = parseFloat(state.hotelCost)||0; // 実費（移動日・稼働日・休日のみ入力欄あり）
       if (day.type==='move'){
         const tb = travelBonus(state.depTime, state.arrTime, bonusRate);
         const lodging = Math.min(lodgingRate+tb.bonus, 4500);
         const meal = lR+dR;
-        rows.push({type:'move', ds:day.ds, hotel:hotelCost, lodging, meal, bonusInfo:tb});
+        rows.push({type:'move', ds:day.ds, lodging, meal, bonusInfo:tb});
       } else if (day.type==='return'){
         const tb = travelBonus(state.depTime, state.arrTime, bonusRate);
         const lodging = Math.min(tb.bonus,3000);
         const meal = bR+lR;
-        rows.push({type:'return', ds:day.ds, hotel:0, lodging, meal, bonusInfo:tb});
+        rows.push({type:'return', ds:day.ds, lodging, meal, bonusInfo:tb});
       } else if (day.type==='work'){
         const wb = workBonus(state.hotelDep, state.hotelArr, bonusRate);
         const lodging = lodgingRate + wb.bonus;
         const meal = bR+lR+dR;
-        rows.push({type:'work', ds:day.ds, hotel:hotelCost, lodging, meal, bonusInfo:wb});
+        rows.push({type:'work', ds:day.ds, lodging, meal, bonusInfo:wb});
       } else if (day.type==='off'){
-        rows.push({type:'off', ds:day.ds, hotel:hotelCost, lodging:0, meal:0});
+        rows.push({type:'off', ds:day.ds, lodging:0, meal:0});
       } else { // single（日帰り・宿泊なし）
         const tb = travelBonus(state.depTime, state.arrTime, bonusRate);
         const lodging = Math.min(tb.bonus,3000);
         const meal = lR+dR;
-        rows.push({type:'single', ds:day.ds, hotel:0, lodging, meal, bonusInfo:tb});
+        rows.push({type:'single', ds:day.ds, lodging, meal, bonusInfo:tb});
       }
     });
 
-    const hotelTotal = rows.reduce((sum,r)=>sum+r.hotel,0);
+    const hotelTotal = v('hotelTotalCost');
     const lodgingTotal = rows.reduce((sum,r)=>sum+r.lodging,0);
     const mealTotal = rows.reduce((sum,r)=>sum+r.meal,0);
 
@@ -929,10 +1036,14 @@
 
     let html = '';
 
+    if (hotelTotal>0){
+      html += `<div class="breakdown-section-label">宿泊費</div>`;
+      html += bdRow('#9b6fff','宿泊費（実費合計）', `${st.nights}泊分`, hotelTotal);
+    }
+
     const moveRow = rows.find(r=>r.type==='move');
     if (moveRow){
       html += `<div class="breakdown-section-label">移動日</div>`;
-      if (moveRow.hotel>0) html += bdRow('#2f6bff','宿泊費（実費）','', moveRow.hotel);
       if (moveRow.lodging>0) html += bdRow('#2f6bff','宿泊日当・日当', moveRow.bonusInfo && moveRow.bonusInfo.eligible ? `条件${moveRow.bonusInfo.count}件該当` : '', moveRow.lodging);
       if (moveRow.meal>0) html += bdRow('#ff7240','食費（昼・夕）','', moveRow.meal);
     }
@@ -940,19 +1051,13 @@
     const workRows = rows.filter(r=>r.type==='work');
     if (workRows.length){
       html += `<div class="breakdown-section-label">稼働日（${workRows.length}日）</div>`;
-      const wh = workRows.reduce((s,r)=>s+r.hotel,0), wl = workRows.reduce((s,r)=>s+r.lodging,0), wm = workRows.reduce((s,r)=>s+r.meal,0);
+      const wl = workRows.reduce((s,r)=>s+r.lodging,0), wm = workRows.reduce((s,r)=>s+r.meal,0);
       const bonusDays = workRows.filter(r=>r.bonusInfo.count>0).length;
-      if (wh>0) html += bdRow('#00b87a','宿泊費（実費合計）', `${workRows.length}泊分`, wh);
       if (wl>0) html += bdRow('#00b87a','宿泊日当', `基本¥${lodgingRate.toLocaleString()}×${workRows.length}日${bonusDays?` + 加算対象${bonusDays}日`:''}`, wl);
       if (wm>0) html += bdRow('#ff7240','食費（朝・昼・夕）', `¥${(bR+lR+dR).toLocaleString()} × ${workRows.length}日`, wm);
     }
 
-    const offRows = rows.filter(r=>r.type==='off');
-    if (offRows.length){
-      html += `<div class="breakdown-section-label">休日（${offRows.length}日）</div>`;
-      const oh = offRows.reduce((s,r)=>s+r.hotel,0);
-      html += bdRow('#8b8fa8','宿泊費（実費合計）', `${offRows.length}泊分`, oh);
-    }
+
 
     const returnRow = rows.find(r=>r.type==='return');
     if (returnRow){
@@ -1003,7 +1108,7 @@
       workDays: workCount, offDays: offCount, total, breakdown: breakdownForHistory,
       inputs: {
         startDate: s, endDate: e,
-        lodgingAllowance: lodgingRate,
+        hotelTotalCost: hotelTotal, lodgingAllowance: lodgingRate,
         breakfast: bR, lunch: lR, dinner: dR, bonusRate: bonusRate,
         gasKm: v('gasKm'), gasMileage: v('gasMileage'), gasPrice: v('gasPrice'),
         fareGo: getFareItems('Go'), fareBack: getFareItems('Back'), otherItems: getOtherItems(),
@@ -1083,7 +1188,7 @@
     const setVal = (elId, val) => { const el = document.getElementById(elId); if (el && val !== undefined && val !== null) el.value = val; };
 
     setVal('startDate', inp.startDate); setVal('endDate', inp.endDate);
-    setVal('lodgingAllowance', inp.lodgingAllowance);
+    setVal('hotelTotalCost', inp.hotelTotalCost); setVal('lodgingAllowance', inp.lodgingAllowance);
     setVal('breakfast', inp.breakfast); setVal('lunch', inp.lunch); setVal('dinner', inp.dinner);
     setVal('bonusRate', inp.bonusRate);
     setVal('gasKm', inp.gasKm); setVal('gasMileage', inp.gasMileage); setVal('gasPrice', inp.gasPrice);
