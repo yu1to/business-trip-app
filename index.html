@@ -97,6 +97,15 @@
   .day-toggle:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
   .day-off-note{font-size:.78rem;color:var(--muted);padding:2px 0}
   .day-hint{font-size:.68rem;color:var(--muted);margin-top:6px;line-height:1.5}
+  .pattern-list{display:flex;flex-direction:column;gap:6px}
+  .pattern-option{display:flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer;transition:all .15s}
+  .pattern-option:hover{border-color:var(--green)}
+  .pattern-option.selected{border-color:var(--green);background:var(--green-light)}
+  .pattern-num{font-size:.85rem;font-weight:900;color:var(--muted);flex-shrink:0;width:16px}
+  .pattern-option.selected .pattern-num{color:var(--green)}
+  .pattern-label{flex:1;font-size:.8rem;color:var(--text);font-weight:500}
+  .pattern-amt{font-size:.72rem;font-weight:700;color:var(--muted);font-family:var(--mono);flex-shrink:0}
+  .pattern-option.selected .pattern-amt{color:var(--green)}
   .day-type-summary{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
   .dts-chip{font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px}
 
@@ -337,7 +346,7 @@
         </div>
         <div class="rule-note" style="background:#e0f8ef;border-color:#7ddfc0;color:#005a3a;">
           <span class="rule-note-icon">💼</span>
-          <div><strong>稼働日</strong>：ホテル出発が7時前で+1,000円／ホテル帰着が19時以降で+1,000円（宿泊日当1,500円に加算）</div>
+          <div><strong>稼働日</strong>：①〜④からその日のパターンを選ぶだけでOK（宿泊日当1,500円に加算）</div>
         </div>
         <div id="dayTypeSummary" class="day-type-summary"></div>
         <div id="dayScheduleList"><p class="empty-note">出張期間を入力すると日程が表示されます</p></div>
@@ -504,7 +513,7 @@
     <div class="about-hero">
       <div class="about-icon">✈</div>
       <div class="about-app-name">出張費計算アプリ</div>
-      <div class="about-version-badge">Version 2.2.0</div>
+      <div class="about-version-badge">Version 2.3.0</div>
       <div class="about-tagline">出張の費用計算をかんたんに</div>
     </div>
 
@@ -541,6 +550,10 @@
       <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
       <div class="section-body">
         <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.3.0</div>
+            <div class="changelog-content"><div class="changelog-title">稼働日の入力をパターン選択式に変更</div><div class="changelog-desc">ホテル出発・帰着時刻の入力を廃止し、①通常②早朝出発③深夜帰着④両方の4パターンから選ぶだけに簡略化</div></div>
+          </div>
           <div class="changelog-item">
             <div class="changelog-version">v2.2.0</div>
             <div class="changelog-content"><div class="changelog-title">宿泊費を出張全体の合計1本に簡略化</div><div class="changelog-desc">日ごとの入力を廃止し、合計金額を1箇所に入力する方式に変更。電卓機能でレシートの金額を足し算しながら合計可能に</div></div>
@@ -657,12 +670,16 @@
     const count=[c1,c2,c3].filter(Boolean).length;
     return {bonus:count*bonusRate, count, duration:hours, eligible:true, cond:[c1,c2,c3], eval:true};
   }
-  function workBonus(hDep,hArr,bonusRate){
-    const d=toMin(hDep), a=toMin(hArr);
-    let bonus=0, count=0; const flags={early:false,late:false};
-    if(d!==null && d<420){bonus+=bonusRate; count++; flags.early=true;}
-    if(a!==null && a>=1140){bonus+=bonusRate; count++; flags.late=true;}
-    return {bonus,count,flags};
+  function workBonusFromPattern(pattern, bonusRate){
+    const early = pattern==='early' || pattern==='both';
+    const late = pattern==='late' || pattern==='both';
+    const count = (early?1:0) + (late?1:0);
+    return {bonus:count*bonusRate, count, flags:{early,late}};
+  }
+  function selectWorkPattern(ds, pattern){
+    if(!dayState[ds]) dayState[ds]={};
+    dayState[ds].workPattern = pattern;
+    renderDaySchedule();
   }
 
   // ===== 宿泊費 電卓 =====
@@ -769,11 +786,19 @@
       </div>`;
     }
     if (day.type==='work'){
+      const pattern = st.workPattern || 'none';
+      const opt = (key, num, label, amtLabel) => `<div class="pattern-option ${pattern===key?'selected':''}" onclick="selectWorkPattern('${day.ds}','${key}')">
+        <span class="pattern-num">${num}</span>
+        <span class="pattern-label">${label}</span>
+        <span class="pattern-amt">${amtLabel}</span>
+      </div>`;
       return `<div class="day-card">
         <div class="day-card-head"><span class="day-badge badge-work">💼 稼働日</span><span class="day-date">${label}</span><button class="day-toggle" onclick="toggleDayType('${day.ds}','off')">→ 休日にする</button></div>
-        <div class="row-2">
-          <div class="field"><label>ホテル出発時刻</label><input type="time" data-date="${day.ds}" data-field="hotelDep" value="${esc(st.hotelDep||'')}" oninput="updateDayState(this)"></div>
-          <div class="field" style="margin-bottom:0"><label>ホテル帰着時刻</label><input type="time" data-date="${day.ds}" data-field="hotelArr" value="${esc(st.hotelArr||'')}" oninput="updateDayState(this)"></div>
+        <div class="pattern-list">
+          ${opt('none','①','通常勤務（早朝出発・深夜帰着なし）','±0円')}
+          ${opt('early','②','ホテル出発が7時前','+1,000円')}
+          ${opt('late','③','ホテル帰着が19時以降','+1,000円')}
+          ${opt('both','④','7時前出発 かつ 19時以降帰着','+2,000円')}
         </div>
       </div>`;
     }
@@ -998,7 +1023,7 @@
         const meal = bR+lR;
         rows.push({type:'return', ds:day.ds, lodging, meal, bonusInfo:tb});
       } else if (day.type==='work'){
-        const wb = workBonus(state.hotelDep, state.hotelArr, bonusRate);
+        const wb = workBonusFromPattern(state.workPattern || 'none', bonusRate);
         const lodging = lodgingRate + wb.bonus;
         const meal = bR+lR+dR;
         rows.push({type:'work', ds:day.ds, lodging, meal, bonusInfo:wb});
