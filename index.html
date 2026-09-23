@@ -25,7 +25,11 @@
     box-sizing:border-box;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
   body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+  /* ===== 固定ヘッダー領域（app-header + tab-nav をまとめて画面上部に固定） ===== */
+  .fixed-top{position:fixed;top:0;left:0;right:0;z-index:1000}
 
   .app-header{background:var(--navy);padding:18px 20px 22px;position:relative;padding-top:calc(18px + env(safe-area-inset-top,0px))}
   .app-header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:1}
@@ -34,7 +38,7 @@
   .theme-toggle{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 12px;color:#fff;font-family:var(--sans);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
   .theme-toggle:hover{background:rgba(255,255,255,.18)}
 
-  .tab-nav{background:var(--navy2);display:flex;padding:0 16px;position:sticky;top:0;z-index:100;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab-nav{background:var(--navy2);display:flex;padding:0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tab-btn{padding:12px 20px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.45);font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.04em;white-space:nowrap}
   .tab-btn.active{color:#fff;border-bottom-color:var(--yellow)}
 
@@ -302,6 +306,7 @@
 </head>
 <body>
 
+<div class="fixed-top" id="fixedTop">
 <div class="app-header">
   <div class="app-header-top">
     <div>
@@ -317,6 +322,7 @@
   <button class="tab-btn" onclick="switchTab('preset',this)">⚙ プリセット管理</button>
   <button class="tab-btn" onclick="switchTab('history',this)">📋 履歴</button>
   <button class="tab-btn" onclick="switchTab('about',this)">ℹ️ このアプリ</button>
+</div>
 </div>
 
 <div class="main">
@@ -524,6 +530,10 @@
       <div class="section-body">
         <div class="changelog">
           <div class="changelog-item">
+            <div class="changelog-version">v2.5.0</div>
+            <div class="changelog-content"><div class="changelog-title">上部バーを画面に固定</div><div class="changelog-desc">ヘッダー・タブ切替バーを画面上部に固定し、下の入力エリアだけがスクロールするように変更</div></div>
+          </div>
+          <div class="changelog-item">
             <div class="changelog-version">v2.4.0</div>
             <div class="changelog-content"><div class="changelog-title">白黒テーマ切替・全項目電卓入力・データ入出力に対応、駅名検索を廃止</div><div class="changelog-desc">ヘッダーからライト/ダーク/自動を手動切替可能に。金額欄はすべてタップで電卓が開く方式に統一。プリセット・履歴をファイルでエクスポート／インポート可能に。交通費は内容と金額の入力のみに簡略化</div></div>
           </div>
@@ -625,6 +635,16 @@
   function v(id) { return parseFloat(document.getElementById(id).value)||0; }
   const DAYS_JA = ['日','月','火','水','木','金','土'];
   const dotColors = ['#2f6bff','#00b87a','#ff7240','#ffc233','#ff4d6a','#9b6fff'];
+
+  // ===== 固定ヘッダーの高さを実測して .main の余白に反映 =====
+  function syncFixedTopHeight(){
+    const fixedTop = document.getElementById('fixedTop');
+    if (!fixedTop) return;
+    const h = fixedTop.getBoundingClientRect().height;
+    document.querySelector('.main').style.paddingTop = (h + 20) + 'px';
+  }
+  window.addEventListener('resize', syncFixedTopHeight);
+  window.addEventListener('orientationchange', ()=>setTimeout(syncFixedTopHeight,150));
 
   // ===== テーマ切替 =====
   function applyTheme(mode){
@@ -892,6 +912,7 @@
     document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
     document.getElementById('tab-'+tab).classList.add('active'); btn.classList.add('active');
     if (tab==='calc') renderPresetApply();
+    window.scrollTo({top:0, behavior:'auto'});
   }
 
   // ===== 交通費明細 =====
@@ -1346,6 +1367,7 @@
   renderPresets(); renderPresetApply(); renderHistory();
   addFare('Go', true); addFare('Back', true); addOther(true);
   updatePeriod();
+  syncFixedTopHeight();
   window.scrollTo(0, 0);
 </script>
 </body>
