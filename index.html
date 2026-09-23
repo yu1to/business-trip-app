@@ -11,7 +11,7 @@
     --blue:#2f6bff;--blue-light:#e8effe;--green:#00b87a;--green-light:#e0f8ef;
     --orange:#ff7240;--orange-light:#fff0ea;--yellow:#ffc233;--yellow-light:#fff9e6;
     --red:#ff4d6a;--red-light:#fff0f2;--purple:#9b6fff;--purple-light:#f1ebff;
-    --border:#e2e0d8;--text:#1a2240;--muted:#8b8fa8;
+    --border:#e2e0d8;--text:#1a2240;--muted:#8b8fa8;--navy-text:#1a2240;
     --mono:'DM Mono',monospace;--sans:'Zen Kaku Gothic New',sans-serif;
     --shadow:0 2px 12px rgba(26,34,64,.08);--shadow-lg:0 8px 32px rgba(26,34,64,.12);
     box-sizing:border-box;
@@ -21,8 +21,11 @@
 
   .app-header{background:var(--navy);padding:20px 24px 24px;position:relative;overflow:hidden;padding-top:calc(20px + env(safe-area-inset-top,0px))}
   .app-header::before{content:'✈';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:5rem;opacity:.07}
+  .app-header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:1}
   .app-header h1{font-size:1.3rem;font-weight:900;color:#fff;letter-spacing:.06em}
   .app-header p{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.08em}
+  .theme-toggle{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 12px;color:#fff;font-family:var(--sans);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .theme-toggle:hover{background:rgba(255,255,255,.18)}
 
   .tab-nav{background:var(--navy2);display:flex;padding:0 16px;position:sticky;top:0;z-index:100;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tab-btn{padding:12px 20px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.45);font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.04em;white-space:nowrap}
@@ -38,7 +41,7 @@
   .section-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
   .icon-blue{background:var(--blue-light)}.icon-green{background:var(--green-light)}
   .icon-orange{background:var(--orange-light)}.icon-yellow{background:var(--yellow-light)}.icon-purple{background:var(--purple-light)}
-  .section-title{font-size:.88rem;font-weight:700;color:var(--navy)}
+  .section-title{font-size:.88rem;font-weight:700;color:var(--navy-text)}
   .section-body{padding:16px 18px}
 
   .field{margin-bottom:12px}
@@ -54,6 +57,8 @@
   }
   input[type=number]{padding-right:42px}
   input:focus{border-color:var(--blue);background:var(--white)}
+  input[type=number].calc-input{cursor:pointer;caret-color:transparent}
+  input[type=number].calc-input:focus{border-color:var(--blue)}
 
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -92,7 +97,7 @@
   .badge-off{background:#eceef5;color:var(--muted)}
   .badge-return{background:var(--yellow-light);color:#a67c00}
   .badge-single{background:var(--orange-light);color:var(--orange)}
-  .day-date{font-size:.8rem;font-weight:700;color:var(--navy);font-family:var(--mono)}
+  .day-date{font-size:.8rem;font-weight:700;color:var(--navy-text);font-family:var(--mono)}
   .day-toggle{margin-left:auto;padding:5px 10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s}
   .day-toggle:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
   .day-off-note{font-size:.78rem;color:var(--muted);padding:2px 0}
@@ -109,31 +114,10 @@
   .day-type-summary{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
   .dts-chip{font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px}
 
-  .auto-field{background:var(--bg);border:1.5px dashed var(--border);border-radius:10px;padding:10px 14px;font-size:.88rem;font-weight:700;color:var(--navy);font-family:var(--mono);min-height:42px;display:flex;align-items:center}
+  .auto-field{background:var(--bg);border:1.5px dashed var(--border);border-radius:10px;padding:10px 14px;font-size:.88rem;font-weight:700;color:var(--navy-text);font-family:var(--mono);min-height:42px;display:flex;align-items:center}
   .auto-field.has-value{color:var(--blue);border-color:var(--blue);background:var(--blue-light)}
 
-  /* 交通費 */
-  .transport-tabs{display:flex;gap:6px;margin-bottom:14px}
-  .transport-tab{flex:1;padding:9px 8px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-family:var(--sans);font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
-  .transport-tab.active{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
-  .transport-panel{display:none}
-  .transport-panel.active{display:block}
-
-  .station-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .station-input-wrap{flex:1}
-  .station-input-wrap input{background:var(--white)}
-  .station-arrow{color:var(--muted);font-size:1.1rem;flex-shrink:0}
-  .link-btns{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-  .link-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:9px;border:none;font-family:var(--sans);font-size:.76rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
-  .link-btn.disabled{opacity:.35;pointer-events:none}
-  .link-btn-yahoo{background:#ff0033;color:#fff}
-  .link-btn-yahoo:not(.disabled):hover{background:#cc0028;transform:translateY(-1px)}
-  .link-btn-google{background:#4285f4;color:#fff}
-  .link-btn-google:not(.disabled):hover{background:#2b6fd6;transform:translateY(-1px)}
-  .link-btn-navitime{background:#00a0e9;color:#fff}
-  .link-btn-navitime:not(.disabled):hover{background:#0080be;transform:translateY(-1px)}
-  .link-hint{font-size:.72rem;color:var(--muted);margin-bottom:12px;line-height:1.6;background:var(--bg);border-radius:8px;padding:8px 10px}
-  .route-label{font-size:.75rem;font-weight:700;color:var(--navy);margin-bottom:8px;margin-top:6px}
+  .route-label{font-size:.75rem;font-weight:700;color:var(--navy-text);margin-bottom:8px;margin-top:6px}
 
   .fare-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
   .fare-item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;animation:slideIn .15s ease}
@@ -209,7 +193,7 @@
   .history-header:hover{background:var(--bg)}
   .history-meta{flex:1;min-width:0}
   .history-date{font-size:.75rem;color:var(--muted);margin-bottom:3px}
-  .history-period{font-size:.9rem;font-weight:700;color:var(--navy)}
+  .history-period{font-size:.9rem;font-weight:700;color:var(--navy-text)}
   .history-total{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--blue);white-space:nowrap}
   .history-chevron{color:var(--muted);font-size:.8rem;transition:transform .2s;flex-shrink:0}
   .history-chevron.open{transform:rotate(180deg)}
@@ -218,7 +202,7 @@
   .history-detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.84rem}
   .history-detail-row:last-child{border-bottom:none}
   .history-detail-name{color:var(--muted)}
-  .history-detail-val{font-family:var(--mono);font-weight:700;color:var(--navy)}
+  .history-detail-val{font-family:var(--mono);font-weight:700;color:var(--navy-text)}
   .history-actions{display:flex;gap:8px;margin-top:12px}
   .btn-reuse{flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s}
   .btn-reuse:hover{background:var(--blue)}
@@ -234,33 +218,37 @@
   .about-tagline{font-size:.8rem;color:rgba(255,255,255,.45);letter-spacing:.06em}
   .about-author{display:flex;align-items:center;gap:14px}
   .about-author-avatar{width:48px;height:48px;border-radius:50%;background:var(--navy);color:#fff;font-size:1.4rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .about-author-name{font-size:1rem;font-weight:900;color:var(--navy);letter-spacing:.04em}
+  .about-author-name{font-size:1rem;font-weight:900;color:var(--navy-text);letter-spacing:.04em}
   .about-author-sub{font-size:.75rem;color:var(--muted);margin-top:2px;font-family:var(--mono)}
   .feature-list{display:flex;flex-direction:column;gap:0}
   .feature-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
   .feature-item:last-child{border-bottom:none}
   .feature-icon{font-size:1.2rem;flex-shrink:0;width:28px;text-align:center;margin-top:1px}
-  .feature-name{font-size:.88rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+  .feature-name{font-size:.88rem;font-weight:700;color:var(--navy-text);margin-bottom:2px}
   .feature-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
   .changelog{display:flex;flex-direction:column;gap:0}
   .changelog-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
   .changelog-item:last-child{border-bottom:none}
   .changelog-version{font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--blue);background:var(--blue-light);padding:3px 8px;border-radius:6px;white-space:nowrap;height:fit-content;margin-top:2px}
-  .changelog-title{font-size:.86rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+  .changelog-title{font-size:.86rem;font-weight:700;color:var(--navy-text);margin-bottom:2px}
   .changelog-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
   .data-info{background:var(--bg);border-radius:10px;overflow:hidden}
   .data-info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:.84rem}
   .data-info-row:last-child{border-bottom:none}
   .data-info-label{color:var(--muted);font-weight:700;font-size:.78rem}
-  .data-info-val{color:var(--navy);font-weight:500}
+  .data-info-val{color:var(--navy-text);font-weight:500}
   .btn-data-clear{flex:1;padding:11px;background:none;border:1.5px solid #ffd0d5;color:var(--red);border-radius:10px;font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s}
   .btn-data-clear:hover{background:var(--red-light)}
+  .btn-data-export{flex:1;padding:11px;background:none;border:1.5px solid var(--border);color:var(--blue);border-radius:10px;font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-data-export:hover{background:var(--blue-light)}
+  .btn-data-import{flex:1;padding:11px;background:none;border:1.5px solid var(--border);color:var(--green);border-radius:10px;font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-data-import:hover{background:var(--green-light)}
   .about-footer{text-align:center;padding:20px 0 8px;font-size:.78rem;color:var(--muted);letter-spacing:.06em}
 
   .btn-save{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:12px;font-family:var(--sans);font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
   .btn-save:hover{opacity:.85;transform:translateY(-1px)}
   .preset-card{background:var(--white);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-  .preset-card-name{font-size:.92rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+  .preset-card-name{font-size:.92rem;font-weight:700;color:var(--navy-text);margin-bottom:6px}
   .preset-tags{display:flex;flex-wrap:wrap;gap:5px}
   .ptag{font-size:.7rem;padding:3px 8px;border-radius:6px;font-family:var(--mono);font-weight:500}
   .ptag-blue{background:var(--blue-light);color:var(--blue)}.ptag-green{background:var(--green-light);color:var(--green)}.ptag-orange{background:var(--orange-light);color:var(--orange)}
@@ -272,28 +260,30 @@
   .calc-modal-overlay.show{display:flex}
   .calc-sheet{background:var(--white);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:var(--shadow-lg);animation:fadeIn .2s ease}
   .calc-sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .calc-sheet-title{font-size:.9rem;font-weight:700;color:var(--navy)}
+  .calc-sheet-title{font-size:.9rem;font-weight:700;color:var(--navy-text)}
   .calc-sheet-close{background:var(--bg);border:none;border-radius:50%;width:28px;height:28px;font-size:1rem;color:var(--muted);cursor:pointer}
   .calc-expr-display{font-size:.78rem;color:var(--muted);text-align:right;min-height:18px;font-family:var(--mono);margin-bottom:2px;word-break:break-all}
-  .calc-main-display{font-size:2.2rem;font-weight:700;color:var(--navy);text-align:right;font-family:var(--mono);margin-bottom:14px;word-break:break-all}
+  .calc-main-display{font-size:2.2rem;font-weight:700;color:var(--navy-text);text-align:right;font-family:var(--mono);margin-bottom:14px;word-break:break-all}
   .hc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .hc-btn{padding:0;height:52px;border:none;border-radius:12px;font-size:1.25rem;font-weight:600;font-family:var(--sans);cursor:pointer;background:var(--bg);color:var(--navy);transition:all .1s}
+  .hc-btn{padding:0;height:52px;border:none;border-radius:12px;font-size:1.25rem;font-weight:600;font-family:var(--sans);cursor:pointer;background:var(--bg);color:var(--navy-text);transition:all .1s}
   .hc-btn:active{opacity:.7;transform:scale(.96)}
   .hc-op{background:var(--blue-light);color:var(--blue)}
   .hc-eq{background:var(--blue);color:#fff}
   .hc-del{background:var(--red-light);color:var(--red)}
   .hc-wide{grid-column:span 2}
 
+  #importFileInput{display:none}
+
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#14182a;--white:#1f2540;--navy:#0e1122;--navy2:#1a2038;
-      --border:#2e3555;--text:#eef0fb;--muted:#8890b5;
+      --border:#2e3555;--text:#eef0fb;--muted:#8890b5;--navy-text:#eef0fb;
       --blue-light:#1c2a4d;--green-light:#0f2e28;--orange-light:#33201a;--yellow-light:#332a10;--red-light:#3a1a22;--purple-light:#241a3d;
     }
   }
   :root[data-theme="dark"]{
     --bg:#14182a;--white:#1f2540;--navy:#0e1122;--navy2:#1a2038;
-    --border:#2e3555;--text:#eef0fb;--muted:#8890b5;
+    --border:#2e3555;--text:#eef0fb;--muted:#8890b5;--navy-text:#eef0fb;
     --blue-light:#1c2a4d;--green-light:#0f2e28;--orange-light:#33201a;--yellow-light:#332a10;--red-light:#3a1a22;--purple-light:#241a3d;
   }
 </style>
@@ -301,8 +291,13 @@
 <body>
 
 <div class="app-header">
-  <h1>✈ 出張費計算アプリ</h1>
-  <p>BUSINESS TRIP EXPENSE CALCULATOR</p>
+  <div class="app-header-top">
+    <div>
+      <h1>✈ 出張費計算アプリ</h1>
+      <p>BUSINESS TRIP EXPENSE CALCULATOR</p>
+    </div>
+    <button class="theme-toggle" id="themeToggleBtn" onclick="cycleTheme()">🌓 <span id="themeToggleLabel">自動</span></button>
+  </div>
 </div>
 
 <div class="tab-nav">
@@ -368,59 +363,23 @@
         <div class="sub-label">💰 基本単価設定</div>
         <div class="rule-note" style="background:var(--blue-light);border-color:#b9cdfc;color:var(--blue);">
           <span class="rule-note-icon">🧾</span>
-          <div>宿泊費は<strong>実費精算</strong>です。出張中にかかったホテル代の<strong>合計</strong>を1つ入力してください（日ごとに分けて入力する必要はありません）。🧮ボタンでレシートの金額を足し算しながら合計できます。</div>
+          <div>宿泊費は<strong>実費精算</strong>です。出張中にかかったホテル代の<strong>合計</strong>を1つ入力してください（日ごとに分けて入力する必要はありません）。タップすると電卓でレシートの金額を足し算しながら合計できます。</div>
         </div>
         <div class="field">
           <label>宿泊費 合計（実費）</label>
-          <div style="display:flex;gap:8px;align-items:stretch">
-            <div class="input-wrap" style="flex:1"><input type="number" id="hotelTotalCost" placeholder="0" min="0"><span class="unit">円</span></div>
-            <button type="button" onclick="openHotelCalc()" title="電卓で合計を計算" style="flex-shrink:0;width:44px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:1.15rem;cursor:pointer;color:var(--navy)">🧮</button>
-          </div>
+          <div class="input-wrap"><input type="number" id="hotelTotalCost" class="calc-input" placeholder="0" min="0" readonly onclick="openCalc('hotelTotalCost','宿泊費 合計')"><span class="unit">円</span></div>
         </div>
-        <div class="field" style="max-width:60%"><label>宿泊日当（移動日・稼働日）</label><div class="input-wrap"><input type="number" id="lodgingAllowance" value="1500" min="0"><span class="unit">円</span></div></div>
+        <div class="field" style="max-width:60%"><label>宿泊日当（移動日・稼働日）</label><div class="input-wrap"><input type="number" id="lodgingAllowance" class="calc-input" value="1500" min="0" readonly onclick="openCalc('lodgingAllowance','宿泊日当')"><span class="unit">円</span></div></div>
         <div class="row-3">
-          <div class="field"><label>朝食補助</label><div class="input-wrap"><input type="number" id="breakfast" value="435" min="0"><span class="unit">円</span></div></div>
-          <div class="field"><label>昼食補助</label><div class="input-wrap"><input type="number" id="lunch" value="720" min="0"><span class="unit">円</span></div></div>
-          <div class="field"><label>夕食補助</label><div class="input-wrap"><input type="number" id="dinner" value="720" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>朝食補助</label><div class="input-wrap"><input type="number" id="breakfast" class="calc-input" value="435" min="0" readonly onclick="openCalc('breakfast','朝食補助')"><span class="unit">円</span></div></div>
+          <div class="field"><label>昼食補助</label><div class="input-wrap"><input type="number" id="lunch" class="calc-input" value="720" min="0" readonly onclick="openCalc('lunch','昼食補助')"><span class="unit">円</span></div></div>
+          <div class="field"><label>夕食補助</label><div class="input-wrap"><input type="number" id="dinner" class="calc-input" value="720" min="0" readonly onclick="openCalc('dinner','夕食補助')"><span class="unit">円</span></div></div>
         </div>
-        <div class="field" style="max-width:60%"><label>条件加算日当（1条件あたり）</label><div class="input-wrap"><input type="number" id="bonusRate" value="1000" min="0"><span class="unit">円</span></div></div>
+        <div class="field" style="max-width:60%"><label>条件加算日当（1条件あたり）</label><div class="input-wrap"><input type="number" id="bonusRate" class="calc-input" value="1000" min="0" readonly onclick="openCalc('bonusRate','条件加算日当')"><span class="unit">円</span></div></div>
 
         <hr class="divider">
 
         <div class="sub-label">🚃 交通費</div>
-        <div class="transport-tabs">
-          <button class="transport-tab active" onclick="switchTransTab('station',this)">🚉 駅名で検索</button>
-          <button class="transport-tab" onclick="switchTransTab('manual',this)">✏️ 金額を入力</button>
-        </div>
-
-        <div class="transport-panel active" id="panel-station">
-          <div class="route-label">↗ 往路（移動日）</div>
-          <div class="station-row">
-            <div class="station-input-wrap"><input type="text" id="fromGo" placeholder="出発駅（例: 大阪）" oninput="updateLinks()"></div>
-            <div class="station-arrow">→</div>
-            <div class="station-input-wrap"><input type="text" id="toGo" placeholder="到着駅（例: 東京）" oninput="updateLinks()"></div>
-          </div>
-          <div class="link-btns">
-            <a class="link-btn link-btn-yahoo disabled" id="yahooGo" href="#" target="_blank" rel="noopener">🔴 Yahoo!路線</a>
-            <a class="link-btn link-btn-google disabled" id="googleGo" href="#" target="_blank" rel="noopener">🔵 Googleマップ</a>
-            <a class="link-btn link-btn-navitime disabled" id="navitimeGo" href="#" target="_blank" rel="noopener">🟦 NAVITIME</a>
-          </div>
-
-          <div class="route-label" style="margin-top:4px">↙ 復路（帰着日）</div>
-          <div class="station-row">
-            <div class="station-input-wrap"><input type="text" id="fromBack" placeholder="出発駅（例: 東京）" oninput="updateLinks()"></div>
-            <div class="station-arrow">→</div>
-            <div class="station-input-wrap"><input type="text" id="toBack" placeholder="到着駅（例: 大阪）" oninput="updateLinks()"></div>
-          </div>
-          <div class="link-btns">
-            <a class="link-btn link-btn-yahoo disabled" id="yahooBack" href="#" target="_blank" rel="noopener">🔴 Yahoo!路線</a>
-            <a class="link-btn link-btn-google disabled" id="googleBack" href="#" target="_blank" rel="noopener">🔵 Googleマップ</a>
-            <a class="link-btn link-btn-navitime disabled" id="navitimeBack" href="#" target="_blank" rel="noopener">🟦 NAVITIME</a>
-          </div>
-          <div class="link-hint">💡 駅名を入力するとボタンが有効になります。各サービスで運賃を確認後、下の明細に入力してください。</div>
-        </div>
-        <div class="transport-panel" id="panel-manual"></div>
-
         <div class="route-label">📋 往路の明細（複数追加可）</div>
         <div class="fare-list" id="fareListGo"></div>
         <div class="fare-total-row" id="fareTotalGo" style="display:none">
@@ -441,9 +400,9 @@
 
         <div class="sub-label">⛽ ガソリン代</div>
         <div class="row-3">
-          <div class="field"><label>走行距離</label><div class="input-wrap"><input type="number" id="gasKm" placeholder="100" min="0"><span class="unit">km</span></div></div>
-          <div class="field"><label>燃費</label><div class="input-wrap"><input type="number" id="gasMileage" placeholder="15" min="0"><span class="unit">km/L</span></div></div>
-          <div class="field"><label>ガソリン単価</label><div class="input-wrap"><input type="number" id="gasPrice" placeholder="160" min="0"><span class="unit">円/L</span></div></div>
+          <div class="field"><label>走行距離</label><div class="input-wrap"><input type="number" id="gasKm" class="calc-input" placeholder="100" min="0" readonly onclick="openCalc('gasKm','走行距離')"><span class="unit">km</span></div></div>
+          <div class="field"><label>燃費</label><div class="input-wrap"><input type="number" id="gasMileage" class="calc-input" placeholder="15" min="0" readonly onclick="openCalc('gasMileage','燃費')"><span class="unit">km/L</span></div></div>
+          <div class="field"><label>ガソリン単価</label><div class="input-wrap"><input type="number" id="gasPrice" class="calc-input" placeholder="160" min="0" readonly onclick="openCalc('gasPrice','ガソリン単価')"><span class="unit">円/L</span></div></div>
         </div>
 
         <hr class="divider">
@@ -477,15 +436,15 @@
       <div class="section-header"><div class="section-icon icon-blue">✚</div><div class="section-title">新しいプリセットを登録</div></div>
       <div class="section-body">
         <div class="field"><label>プリセット名</label><input type="text" id="presetName" placeholder="例: 国内出張スタンダード"></div>
-        <div class="field"><label>宿泊日当（円/日）</label><div class="input-wrap"><input type="number" id="pLodging" placeholder="1,500" min="0"><span class="unit">円</span></div></div>
+        <div class="field"><label>宿泊日当（円/日）</label><div class="input-wrap"><input type="number" id="pLodging" class="calc-input" placeholder="1,500" min="0" readonly onclick="openCalc('pLodging','宿泊日当')"><span class="unit">円</span></div></div>
         <div class="row-3">
-          <div class="field"><label>朝食（円）</label><div class="input-wrap"><input type="number" id="pBreakfast" placeholder="435" min="0"><span class="unit">円</span></div></div>
-          <div class="field"><label>昼食（円）</label><div class="input-wrap"><input type="number" id="pLunch" placeholder="720" min="0"><span class="unit">円</span></div></div>
-          <div class="field"><label>夕食（円）</label><div class="input-wrap"><input type="number" id="pDinner" placeholder="720" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>朝食（円）</label><div class="input-wrap"><input type="number" id="pBreakfast" class="calc-input" placeholder="435" min="0" readonly onclick="openCalc('pBreakfast','朝食')"><span class="unit">円</span></div></div>
+          <div class="field"><label>昼食（円）</label><div class="input-wrap"><input type="number" id="pLunch" class="calc-input" placeholder="720" min="0" readonly onclick="openCalc('pLunch','昼食')"><span class="unit">円</span></div></div>
+          <div class="field"><label>夕食（円）</label><div class="input-wrap"><input type="number" id="pDinner" class="calc-input" placeholder="720" min="0" readonly onclick="openCalc('pDinner','夕食')"><span class="unit">円</span></div></div>
         </div>
         <div class="row-2">
-          <div class="field"><label>燃費（km/L）</label><div class="input-wrap"><input type="number" id="pMileage" placeholder="15" min="0"><span class="unit">km/L</span></div></div>
-          <div class="field"><label>ガソリン単価（円/L）</label><div class="input-wrap"><input type="number" id="pGasPrice" placeholder="160" min="0"><span class="unit">円</span></div></div>
+          <div class="field"><label>燃費（km/L）</label><div class="input-wrap"><input type="number" id="pMileage" class="calc-input" placeholder="15" min="0" readonly onclick="openCalc('pMileage','燃費')"><span class="unit">km/L</span></div></div>
+          <div class="field"><label>ガソリン単価（円/L）</label><div class="input-wrap"><input type="number" id="pGasPrice" class="calc-input" placeholder="160" min="0" readonly onclick="openCalc('pGasPrice','ガソリン単価')"><span class="unit">円</span></div></div>
         </div>
         <button class="btn-save" onclick="savePreset()">✚ プリセットを保存する</button>
       </div>
@@ -513,7 +472,7 @@
     <div class="about-hero">
       <div class="about-icon">✈</div>
       <div class="about-app-name">出張費計算アプリ</div>
-      <div class="about-version-badge">Version 2.3.0</div>
+      <div class="about-version-badge">Version 2.4.0</div>
       <div class="about-tagline">出張の費用計算をかんたんに</div>
     </div>
 
@@ -537,10 +496,12 @@
           <div class="feature-item"><span class="feature-icon">🗓</span><div class="feature-text"><div class="feature-name">移動日・稼働日・休日・帰着日の自動区分</div><div class="feature-desc">新出張規定に基づき日ごとに区分し、手動切替も可能</div></div></div>
           <div class="feature-item"><span class="feature-icon">⏰</span><div class="feature-text"><div class="feature-name">時刻ベースの日当自動判定</div><div class="feature-desc">出発・到着・ホテル出入り時刻から条件加算日当を自動計算</div></div></div>
           <div class="feature-item"><span class="feature-icon">🍽</span><div class="feature-text"><div class="feature-name">日区分ごとの食事補助自動計算</div><div class="feature-desc">移動日・稼働日・帰着日で異なる食事補助を自動適用</div></div></div>
-          <div class="feature-item"><span class="feature-icon">🚃</span><div class="feature-text"><div class="feature-name">交通費の複数明細入力</div><div class="feature-desc">領収書・切符など複数の費用を合算</div></div></div>
-          <div class="feature-item"><span class="feature-icon">🔍</span><div class="feature-text"><div class="feature-name">路線検索リンク</div><div class="feature-desc">Yahoo!路線・Googleマップ・NAVITIMEへ連携</div></div></div>
+          <div class="feature-item"><span class="feature-icon">🚃</span><div class="feature-text"><div class="feature-name">交通費の複数明細入力</div><div class="feature-desc">内容と金額を入力するだけで領収書分を合算</div></div></div>
+          <div class="feature-item"><span class="feature-icon">🧮</span><div class="feature-text"><div class="feature-name">全項目 電卓入力</div><div class="feature-desc">金額欄はすべてタップで電卓が開き、足し算しながら入力可能</div></div></div>
           <div class="feature-item"><span class="feature-icon">⚡</span><div class="feature-text"><div class="feature-name">プリセット機能</div><div class="feature-desc">よく使う単価を登録してワンタップ適用</div></div></div>
           <div class="feature-item"><span class="feature-icon">📋</span><div class="feature-text"><div class="feature-name">履歴保存</div><div class="feature-desc">計算結果を自動保存・再利用可能</div></div></div>
+          <div class="feature-item"><span class="feature-icon">📤</span><div class="feature-text"><div class="feature-name">データのエクスポート／インポート</div><div class="feature-desc">プリセット・履歴をファイルに書き出し、他端末で読み込み可能</div></div></div>
+          <div class="feature-item"><span class="feature-icon">🌓</span><div class="feature-text"><div class="feature-name">ライト／ダークモード切替</div><div class="feature-desc">端末の設定に加えて、アプリ内でも手動切替が可能</div></div></div>
           <div class="feature-item"><span class="feature-icon">🔒</span><div class="feature-text"><div class="feature-name">プライバシー保護</div><div class="feature-desc">データはすべてお使いの端末内にのみ保存</div></div></div>
         </div>
       </div>
@@ -550,6 +511,10 @@
       <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
       <div class="section-body">
         <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.4.0</div>
+            <div class="changelog-content"><div class="changelog-title">白黒テーマ切替・全項目電卓入力・データ入出力に対応、駅名検索を廃止</div><div class="changelog-desc">ヘッダーからライト/ダーク/自動を手動切替可能に。金額欄はすべてタップで電卓が開く方式に統一。プリセット・履歴をファイルでエクスポート／インポート可能に。交通費は内容と金額の入力のみに簡略化</div></div>
+          </div>
           <div class="changelog-item">
             <div class="changelog-version">v2.3.0</div>
             <div class="changelog-content"><div class="changelog-title">稼働日の入力をパターン選択式に変更</div><div class="changelog-desc">ホテル出発・帰着時刻の入力を廃止し、①通常②早朝出発③深夜帰着④両方の4パターンから選ぶだけに簡略化</div></div>
@@ -590,8 +555,13 @@
           <div class="data-info-row"><span class="data-info-label">外部送信</span><span class="data-info-val">なし（完全ローカル）</span></div>
           <div class="data-info-row"><span class="data-info-label">履歴保存件数</span><span class="data-info-val">最大30件</span></div>
         </div>
-        <div style="margin-top:12px;display:flex;gap:8px">
-          <button class="btn-data-clear" onclick="clearAllData()">⚠️ すべてのデータを削除</button>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-data-export" onclick="exportData()">📤 エクスポート</button>
+          <button class="btn-data-import" onclick="document.getElementById('importFileInput').click()">📥 インポート</button>
+        </div>
+        <input type="file" id="importFileInput" accept="application/json" onchange="importData(this.files[0])">
+        <div style="margin-top:8px">
+          <button class="btn-data-clear" style="width:100%" onclick="clearAllData()">⚠️ すべてのデータを削除</button>
         </div>
       </div>
     </div>
@@ -603,8 +573,8 @@
 <div class="calc-modal-overlay" id="modal-hotel-calc">
   <div class="calc-sheet">
     <div class="calc-sheet-head">
-      <span class="calc-sheet-title">🧮 宿泊費 電卓</span>
-      <button class="calc-sheet-close" onclick="closeHotelCalc()">×</button>
+      <span class="calc-sheet-title">🧮 <span id="calcSheetTitle">電卓</span></span>
+      <button class="calc-sheet-close" onclick="closeCalc()">×</button>
     </div>
     <div class="calc-expr-display" id="hotelCalcExprDisplay"></div>
     <div class="calc-main-display" id="hotelCalcMainDisplay">0</div>
@@ -627,7 +597,7 @@
     </div>
     <div class="hc-grid" style="margin-top:8px">
       <button class="hc-btn hc-del" onclick="hcDel()">⌫</button>
-      <button class="hc-btn hc-eq" style="grid-column:span 3" onclick="hcEquals()">= 合計を入力</button>
+      <button class="hc-btn hc-eq" style="grid-column:span 3" onclick="hcEquals()">= 入力する</button>
     </div>
   </div>
 </div>
@@ -638,6 +608,24 @@
   function v(id) { return parseFloat(document.getElementById(id).value)||0; }
   const DAYS_JA = ['日','月','火','水','木','金','土'];
   const dotColors = ['#2f6bff','#00b87a','#ff7240','#ffc233','#ff4d6a','#9b6fff'];
+
+  // ===== テーマ切替 =====
+  function applyTheme(mode){
+    if (mode==='light') document.documentElement.setAttribute('data-theme','light');
+    else if (mode==='dark') document.documentElement.setAttribute('data-theme','dark');
+    else document.documentElement.removeAttribute('data-theme');
+    const labels = {auto:'自動', light:'ライト', dark:'ダーク'};
+    const icons = {auto:'🌓', light:'☀️', dark:'🌙'};
+    document.getElementById('themeToggleLabel').textContent = labels[mode];
+    document.getElementById('themeToggleBtn').firstChild.textContent = icons[mode]+' ';
+  }
+  function cycleTheme(){
+    const order = ['auto','light','dark'];
+    let cur = localStorage.getItem('bt_theme_v1') || 'auto';
+    const next = order[(order.indexOf(cur)+1) % order.length];
+    localStorage.setItem('bt_theme_v1', next);
+    applyTheme(next);
+  }
 
   function pad2(n){ return String(n).padStart(2,'0'); }
   function fmtDateLocal(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
@@ -682,14 +670,18 @@
     renderDaySchedule();
   }
 
-  // ===== 宿泊費 電卓 =====
+  // ===== 汎用 電卓モーダル =====
   let hcExpr = '';
-  function openHotelCalc(){
+  let calcTargetId = null;
+  function openCalc(targetId, title){
+    calcTargetId = targetId;
+    document.getElementById('calcSheetTitle').textContent = title || '電卓';
     hcExpr = '';
     updateHcDisplay();
     document.getElementById('modal-hotel-calc').classList.add('show');
   }
-  function closeHotelCalc(){ document.getElementById('modal-hotel-calc').classList.remove('show'); }
+  function openHotelCalc(){ openCalc('hotelTotalCost','宿泊費 合計'); }
+  function closeCalc(){ document.getElementById('modal-hotel-calc').classList.remove('show'); calcTargetId=null; }
   function hcInput(val){
     const OPS=['+','−','×','÷'];
     const last = hcExpr.slice(-1);
@@ -727,9 +719,13 @@
   }
   function hcEquals(){
     const result = hcEval();
-    if (result!==null && result>=0){
-      document.getElementById('hotelTotalCost').value = result;
-      closeHotelCalc();
+    if (result!==null && result>=0 && calcTargetId){
+      const el = document.getElementById(calcTargetId);
+      if (el){
+        el.value = result;
+        el.dispatchEvent(new Event('input', {bubbles:true}));
+      }
+      closeCalc();
     }
   }
 
@@ -871,32 +867,6 @@
     if (tab==='calc') renderPresetApply();
   }
 
-  // ===== 交通費タブ =====
-  function switchTransTab(tab, btn) {
-    document.querySelectorAll('.transport-tab').forEach(e => e.classList.remove('active'));
-    document.querySelectorAll('.transport-panel').forEach(e => e.classList.remove('active'));
-    btn.classList.add('active');
-    const panel = document.getElementById('panel-' + tab);
-    if (panel) panel.classList.add('active');
-  }
-  function updateLinks() {
-    setLinks(document.getElementById('fromGo').value.trim(), document.getElementById('toGo').value.trim(), 'yahooGo','googleGo','navitimeGo');
-    setLinks(document.getElementById('fromBack').value.trim(), document.getElementById('toBack').value.trim(), 'yahooBack','googleBack','navitimeBack');
-  }
-  function setLinks(from, to, yId, gId, nId) {
-    const ok = from && to;
-    const y = document.getElementById(yId), g = document.getElementById(gId), n = document.getElementById(nId);
-    if (ok) {
-      const f = encodeURIComponent(from+'駅'), t = encodeURIComponent(to+'駅');
-      y.href = `https://transit.yahoo.co.jp/search/print?from=${f}&to=${t}&type=1&ws=3&s=0&expkind=1&userpass=1&al=1&shin=1&ex=1&hb=1&lb=1&sr=1`;
-      g.href = `https://www.google.com/maps/dir/${f}/${t}/?travelmode=transit&hl=ja`;
-      n.href = `https://www.navitime.co.jp/transfer/searchlist?orvStationName=${encodeURIComponent(from)}&dnvStationName=${encodeURIComponent(to)}`;
-      [y,g,n].forEach(e => e.classList.remove('disabled'));
-    } else {
-      [y,g,n].forEach(e => { e.href='#'; e.classList.add('disabled'); });
-    }
-  }
-
   // ===== 交通費明細 =====
   let fareIdGo = 0, fareIdBack = 0, otherIdCount = 0;
   function addFare(dir, noFocus) {
@@ -908,11 +878,13 @@
     div.innerHTML = `
       <div class="fare-item-main">
         <div class="fare-item-name"><input type="text" placeholder="内容（例: 新幹線自由席、領収書分）" oninput="updateFareTotal('${dir}')"></div>
-        <div class="fare-item-amount"><div class="fare-item-amount-wrap"><input type="number" placeholder="0" min="0" oninput="updateFareTotal('${dir}')"><span class="unit">円</span></div></div>
+        <div class="fare-item-amount"><div class="fare-item-amount-wrap"><input type="number" class="calc-input" placeholder="0" min="0" readonly onclick="openCalc(this.id||(this.id='${uid}_amt'),'交通費 金額')" oninput="updateFareTotal('${dir}')"><span class="unit">円</span></div></div>
       </div>
       <span class="fare-subtotal" id="${uid}_sub">—</span>
       <button class="btn-remove-fare" onclick="removeFare('${uid}','${dir}')" title="削除">×</button>`;
     list.appendChild(div);
+    div.querySelector('input[type=number]').id = uid + '_amt';
+    div.querySelector('input[type=number]').addEventListener('input', ()=>updateFareTotal(dir));
     updateFareTotal(dir);
     if(!noFocus) div.querySelector('input[type=text]').focus();
   }
@@ -958,11 +930,14 @@
     div.innerHTML = `
       <div class="other-item-main">
         <div class="other-item-name"><input type="text" placeholder="項目名（例: 駐車場代、バス代）" oninput="updateOtherTotal()"></div>
-        <div class="other-item-amount"><div class="other-item-amount-wrap"><input type="number" placeholder="0" min="0" oninput="updateOtherTotal()"><span class="unit">円</span></div></div>
+        <div class="other-item-amount"><div class="other-item-amount-wrap"><input type="number" class="calc-input" placeholder="0" min="0" readonly oninput="updateOtherTotal()"><span class="unit">円</span></div></div>
       </div>
       <span></span>
       <button class="btn-remove-other" onclick="removeOther('${uid}')" title="削除">×</button>`;
     list.appendChild(div);
+    const amtInput = div.querySelector('input[type=number]');
+    amtInput.id = uid + '_amt';
+    amtInput.setAttribute('onclick', `openCalc('${uid}_amt','その他 金額')`);
     updateOtherTotal();
     if(!noFocus) div.querySelector('input[type=text]').focus();
   }
@@ -1275,8 +1250,66 @@
     alert('すべてのデータを削除しました。');
   }
 
+  // ===== データ エクスポート／インポート =====
+  async function exportData(){
+    const payload = {
+      app: 'business-trip-expense-calculator',
+      exportedAt: new Date().toISOString(),
+      presets, histories
+    };
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const filename = `出張費アプリ_データ_${fmtDateLocal(new Date())}.json`;
+    try{
+      const downloads = await claude.use('downloads');
+      if (downloads){
+        await downloads.save({ filename, data: jsonStr });
+        return;
+      }
+    }catch(e){}
+    // フォールバック（ダウンロードAPIが使えない環境）
+    try{
+      const blob = new Blob([jsonStr], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }catch(e){
+      alert('エクスポートに失敗しました。');
+    }
+  }
+  function importData(file){
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const data = JSON.parse(e.target.result);
+        if (!data || (!Array.isArray(data.presets) && !Array.isArray(data.histories))) {
+          alert('このファイルは対応する形式ではありません。'); return;
+        }
+        const mode = confirm('OK＝現在のデータに追加してインポート\nキャンセル＝現在のデータを置き換えてインポート');
+        if (mode){
+          if (Array.isArray(data.presets)) presets = presets.concat(data.presets.map(p=>({...p, id: p.id || Date.now()+Math.random()})));
+          if (Array.isArray(data.histories)) histories = histories.concat(data.histories.map(h=>({...h, id: h.id || Date.now()+Math.random()})));
+        } else {
+          if (Array.isArray(data.presets)) presets = data.presets;
+          if (Array.isArray(data.histories)) histories = data.histories;
+        }
+        if (histories.length > MAX_HISTORY) histories = histories.slice(0, MAX_HISTORY);
+        saveToLS();
+        localStorage.setItem('bt_history_v6', JSON.stringify(histories));
+        renderPresets(); renderPresetApply(); renderHistory();
+        alert('インポートが完了しました。');
+      }catch(err){
+        alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+      }
+      document.getElementById('importFileInput').value = '';
+    };
+    reader.readAsText(file);
+  }
+
   // ===== 初期化 =====
   if (history.scrollRestoration) history.scrollRestoration = "manual";
+  applyTheme(localStorage.getItem('bt_theme_v1') || 'auto');
   document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
   renderPresets(); renderPresetApply(); renderHistory();
   addFare('Go', true); addFare('Back', true); addOther(true);
