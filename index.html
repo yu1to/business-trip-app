@@ -560,7 +560,7 @@
     <div class="about-hero">
       <div class="about-icon">✈</div>
       <div class="about-app-name">出張費計算アプリ</div>
-      <div class="about-version-badge">Version 2.8.0</div>
+      <div class="about-version-badge">Version 2.8.1</div>
       <div class="about-tagline">出張の費用計算をかんたんに</div>
     </div>
 
@@ -600,6 +600,10 @@
       <div class="section-header"><div class="section-icon icon-yellow">🕐</div><div class="section-title">更新履歴</div></div>
       <div class="section-body">
         <div class="changelog">
+          <div class="changelog-item">
+            <div class="changelog-version">v2.8.1</div>
+            <div class="changelog-content"><div class="changelog-title">家計簿インポート時に損益を自動計算</div><div class="changelog-desc">対象期間が入力済みの状態で家計簿のバックアップ(.json)をインポートすると、「損益を計算する」ボタンを押さなくても自動で損益が再計算され、該当する履歴にも反映されるように</div></div>
+          </div>
           <div class="changelog-item">
             <div class="changelog-version">v2.8.0</div>
             <div class="changelog-content"><div class="changelog-title">履歴に損益を組み込み</div><div class="changelog-desc">「精算」タブで損益を計算すると、対象期間と一致する「履歴」の項目に支給見込み額・実際の支出・損益（得した分／持ち出し分）が自動で紐づき、履歴一覧でも一目で確認できるように</div></div>
@@ -1343,6 +1347,9 @@
         const txs = data.transactions.filter(t => t.type==='expense' && catIds.has(t.catId));
         kakeboImportedTx = { txs, catNames: tripCats.map(c => c.name).join('・') };
         renderSettleActualList();
+        // 対象期間が入力済みなら、インポートのたびに自動で損益計算・履歴反映まで行う
+        const s = document.getElementById('settleStart').value, e = document.getElementById('settleEnd').value;
+        if (s && e) calculateSettlement();
       }catch(err){
         alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
       }
